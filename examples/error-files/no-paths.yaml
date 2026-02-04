@@ -1,0 +1,5 @@
+# Есть openapi и info, но нет paths
+openapi: 3.0.3
+info:
+  title: No Paths API
+  version: 1.0.0

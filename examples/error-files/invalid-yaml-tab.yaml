@@ -1,0 +1,5 @@
+# Табы в YAML — невалидны (должны быть пробелы)
+openapi: 3.0.3
+info:
+	title: Tab indentation
+	version: 1.0.0

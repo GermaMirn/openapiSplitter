@@ -1,0 +1,508 @@
+openapi: 3.0.3
+info:
+  title: E-Commerce API
+  description: Full example API for testing OpenAPI splitter
+  version: 2.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+servers:
+  - url: https://api.example.com
+    description: Production
+  - url: https://staging-api.example.com
+    description: Staging
+tags:
+  - name: auth
+    description: Authentication
+  - name: users
+    description: User management
+  - name: products
+    description: Product catalog
+  - name: orders
+    description: Order management
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    ApiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://auth.example.com/oauth/authorize
+          tokenUrl: https://auth.example.com/oauth/token
+          scopes:
+            read: read access
+            write: write access
+  schemas:
+    User:
+      type: object
+      required:
+        - id
+        - email
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        firstName:
+          type: string
+        lastName:
+          type: string
+        role:
+          $ref: '#/components/schemas/UserRole'
+        createdAt:
+          type: string
+          format: date-time
+    UserRole:
+      type: string
+      enum:
+        - admin
+        - manager
+        - user
+        - guest
+    Product:
+      type: object
+      required:
+        - id
+        - name
+        - price
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+          format: decimal
+          minimum: 0
+        sku:
+          type: string
+        category:
+          $ref: '#/components/schemas/Category'
+        inStock:
+          type: boolean
+          default: true
+    Category:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        parentId:
+          type: string
+          nullable: true
+    Order:
+      type: object
+      required:
+        - id
+        - userId
+        - items
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        totalAmount:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+    OrderItem:
+      type: object
+      properties:
+        productId:
+          type: string
+        quantity:
+          type: integer
+          minimum: 1
+        unitPrice:
+          type: number
+    OrderStatus:
+      type: string
+      enum:
+        - pending
+        - confirmed
+        - shipped
+        - delivered
+        - cancelled
+    PaginatedResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items: {}
+        total:
+          type: integer
+        page:
+          type: integer
+        pageSize:
+          type: integer
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+paths:
+  /api/v1/auth/login:
+    post:
+      tags:
+        - auth
+      summary: Login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  expiresIn:
+                    type: integer
+        "401":
+          description: Unauthorized
+  /api/v1/auth/refresh:
+    post:
+      tags:
+        - auth
+      summary: Refresh token
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Success
+        "401":
+          description: Unauthorized
+  /api/v1/users:
+    get:
+      tags:
+        - users
+      summary: List users
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: role
+          in: query
+          schema:
+            $ref: '#/components/schemas/UserRole'
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/User'
+    post:
+      tags:
+        - users
+      summary: Create user
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad request
+  /api/v1/users/{id}:
+    get:
+      tags:
+        - users
+      summary: Get user by ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        "404":
+          description: Not found
+    put:
+      tags:
+        - users
+      summary: Update user
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        "200":
+          description: Success
+        "404":
+          description: Not found
+    delete:
+      tags:
+        - users
+      summary: Delete user
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: No content
+        "404":
+          description: Not found
+  /api/v1/products:
+    get:
+      tags:
+        - products
+      summary: List products
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: inStock
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+    post:
+      tags:
+        - products
+      summary: Create product
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Product'
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad request
+  /api/v1/products/{id}:
+    get:
+      tags:
+        - products
+      summary: Get product by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        "404":
+          description: Not found
+    put:
+      tags:
+        - products
+      summary: Update product
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Product'
+      responses:
+        "200":
+          description: Success
+        "404":
+          description: Not found
+  /api/v1/orders:
+    get:
+      tags:
+        - orders
+      summary: List orders
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/OrderStatus'
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+    post:
+      tags:
+        - orders
+      summary: Create order
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Order'
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad request
+  /api/v1/orders/{id}:
+    get:
+      tags:
+        - orders
+      summary: Get order by ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        "404":
+          description: Not found
+    patch:
+      tags:
+        - orders
+      summary: Update order status
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  $ref: '#/components/schemas/OrderStatus'
+      responses:
+        "200":
+          description: Success
+        "404":
+          description: Not found

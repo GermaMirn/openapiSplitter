@@ -1,0 +1,8 @@
+# Есть openapi и paths, но нет info
+openapi: 3.0.3
+paths:
+  /health:
+    get:
+      responses:
+        "200":
+          description: OK

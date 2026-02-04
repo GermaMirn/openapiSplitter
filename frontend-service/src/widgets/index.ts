@@ -1,1 +1,3 @@
-// Placeholder file for git tracking
+export { Sidebar } from './sidebar';
+export { MainContent } from './main-content';
+export type { MainContentProps } from './main-content';

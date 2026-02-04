@@ -1,0 +1,5 @@
+# Валидный YAML, но не OpenAPI — нет openapi или swagger
+some:
+  random: config
+  version: 1
+foo: bar

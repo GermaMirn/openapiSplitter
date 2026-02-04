@@ -1,0 +1,5 @@
+# Swagger 2.0 без paths
+swagger: "2.0"
+info:
+  title: Swagger without paths
+  version: 1.0.0
