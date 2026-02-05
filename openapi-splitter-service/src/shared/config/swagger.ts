@@ -7,16 +7,16 @@ const options: swaggerJsdoc.Options = {
     info: {
       title: 'OpenAPI Splitter Service API',
       version: '1.0.0',
-      description: 'API для парсинга и разделения OpenAPI спецификаций',
+      description: 'API для парсинга и разделения OpenAPI спецификаций по правилам. Принимает монолитный YAML файл и разрезает его на логические части.',
     },
     servers: [
       {
-        url: 'http://localhost/api/splitter',
-        description: 'Development server (through nginx)',
+        url: 'http://localhost',
+        description: 'Development server (through nginx proxy)',
       },
       {
         url: `http://localhost:${config.port}`,
-        description: 'Direct server access',
+        description: 'Direct server access (port 8000)',
       },
     ],
     components: {
@@ -39,6 +39,40 @@ const options: swaggerJsdoc.Options = {
                 },
               },
             },
+          },
+        },
+        TreeNode: {
+          type: 'object',
+          properties: {
+            key: { type: 'string', description: 'Уникальный ключ узла' },
+            label: { type: 'string', description: 'Имя файла/папки' },
+            data: {
+              type: 'object',
+              properties: {
+                type: {
+                  type: 'string',
+                  enum: ['document', 'schema', 'security', 'path', 'folder', 'file'],
+                  description: 'Тип узла'
+                },
+                path: { type: 'string', description: 'Путь к файлу (для файлов)' },
+                fileId: { type: 'string', description: 'ID файла (для файлов)' },
+              },
+            },
+            children: {
+              type: 'array',
+              items: { $ref: '#/components/schemas/TreeNode' },
+            },
+          },
+        },
+        FileMetadata: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', description: 'ID файла' },
+            path: { type: 'string', description: 'Виртуальный путь' },
+            originalName: { type: 'string', description: 'Исходное имя файла' },
+            size: { type: 'integer', description: 'Размер в байтах' },
+            mimeType: { type: 'string', nullable: true, description: 'MIME-тип' },
+            createdAt: { type: 'string', format: 'date-time', description: 'Дата создания (ISO)' },
           },
         },
       },

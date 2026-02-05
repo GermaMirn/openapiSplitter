@@ -1,252 +1,302 @@
 # OpenAPI Splitter Service
 
-Сервис для парсинга и разделения OpenAPI спецификаций на логические части согласно правилам разделения.
+Микросервис для парсинга и разделения монолитных OpenAPI спецификаций на логические части согласно правилам.
 
-## Содержание
+## Описание
 
-- [Архитектура](#архитектура)
-- [Структура проекта](#структура-проекта)
-- [Слои архитектуры](#слои-архитектуры)
-- [Принципы проектирования](#принципы-проектирования)
-- [Разработка](#разработка)
+Сервис принимает большой файл `openapi.yaml`, разрезает его на структурированные части (components, paths) и сохраняет результат в файловое хранилище через `files-service`.
+
+### Правила разделения
+
+1. **Общие поля** (`openapi`, `info`, `servers`, `tags`) остаются в корневом файле `openapi.yaml`
+2. **Components** выносятся в `components/{type}/{Name}.yaml`
+   - Например: `components/schemas/User.yaml`, `components/securitySchemes/BearerAuth.yaml`
+3. **Paths** выносятся в структуру, повторяющую URL-путь
+   - `/api/v1/users` → `paths/api/v1/users.yaml`
+   - `/api/v1/users/{id}` → `paths/api/v1/users/{id}.yaml`
+4. Все ссылки `$ref` остаются абсолютными (например, `#/components/schemas/User`)
 
 ## Архитектура
 
-Проект использует **Clean Architecture** (также известную как Onion Architecture или Hexagonal Architecture) - подход к проектированию, который обеспечивает:
-
-- **Независимость от фреймворков** - бизнес-логика не зависит от Express, базы данных или других внешних библиотек
-- **Тестируемость** - легко тестировать бизнес-логику без HTTP, базы данных и других внешних зависимостей
-- **Независимость от UI** - можно легко заменить REST API на GraphQL, gRPC
-- **Независимость от базы данных** - можно перейти с PostgreSQL на MongoDB без изменения бизнес-логики
-- **Независимость от внешних сервисов** - бизнес-логика не знает о конкретных реализациях внешних сервисов
-
-### Почему Clean Architecture?
-
-1. **Масштабируемость** - легко добавлять новые функции без изменения существующего кода
-2. **Поддерживаемость** - четкое разделение ответственности упрощает понимание и изменение кода
-3. **Тестируемость** - каждый слой можно тестировать независимо
-4. **Гибкость** - можно менять инфраструктуру (база данных, HTTP фреймворк) без изменения бизнес-логики
-
-## Структура проекта
+Реализовано по принципам **DDD (Domain-Driven Design)** с чёткым разделением слоёв:
 
 ```
 src/
-├── domain/                                 # Доменный слой (ядро приложения)
-│   ├── entities/                           # Сущности с бизнес-логикой
-│   │   └── openapi-spec.ts                 # OpenAPISpec - основная доменная сущность
-│   ├── value-objects/                      # Value Objects (неизменяемые объекты-значения)
-│   │   └── file-path.ts                    # FilePath - путь к файлу с валидацией
-│   ├── interfaces/                         # Интерфейсы для зависимостей
-│   │   ├── spec-parser.interface.ts
-│   │   └── file-storage.interface.ts
-│   └── exceptions/                         # Доменные исключения
-│       └── domain-exceptions.ts
-│
-├── application/                            # Слой приложения (Use Cases)
-│   ├── use-cases/                          # Use Cases (бизнес-операции)
-│   │   └── split-openapi-spec.use-case.ts
-│   └── dto/                                # Data Transfer Objects
-│       └── split-spec.dto.ts
-│
-├── infrastructure/                         # Инфраструктурный слой
-│   ├── parsers/                            # Парсеры (YAML, JSON)
-│   │   └── yaml-spec-parser.ts
-│   ├── external/                           # Внешние сервисы
-│   │   └── files-service-client.ts
-│   └── persistence/                        # Репозитории (для будущего использования)
-│
-├── presentation/                           # Слой представления (HTTP)
-│   ├── controllers/                        # HTTP контроллеры
-│   │   ├── health.controller.ts
-│   │   └── split.controller.ts
-│   ├── routes/                             # Маршруты
-│   │   └── index.ts
-│   └── middleware/                         # Express middleware
-│       └── error-handler.middleware.ts
-│
-├── shared/                                 # Общие компоненты
-│   ├── config/                             # Конфигурация
-│   │   ├── config.ts
-│   │   └── swagger.ts
-│   └── utils/                              # Утилиты
-│       └── logger.ts
-│
-└── index.ts                                # Точка входа приложения
+├── domain/                    # Доменный слой (бизнес-логика)
+│   ├── entities/             # Сущности (VirtualFile, SplitResult)
+│   ├── value-objects/        # Value Objects (VirtualPath, OpenApiVersion)
+│   ├── interfaces/           # Интерфейсы доменных сервисов
+│   └── exceptions/           # Доменные исключения
+├── application/              # Слой приложения (use cases)
+│   ├── dto/                  # DTO для use cases
+│   └── use-cases/            # Бизнес-кейсы
+├── infrastructure/           # Инфраструктурный слой (реализации)
+│   ├── parsers/             # YAML парсер
+│   ├── validators/          # OpenAPI валидатор
+│   ├── splitter/            # Логика разрезки
+│   ├── external/            # Клиент для files-service
+│   └── tree/                # Построитель дерева
+├── presentation/            # Слой представления (REST API)
+│   ├── controllers/        # Контроллеры
+│   ├── routes/             # Маршруты
+│   └── middleware/         # Middleware (error handler)
+└── shared/                  # Общие утилиты
+    ├── config/             # Конфигурация
+    ├── types/              # Общие типы
+    └── utils/              # Утилиты (logger)
 ```
 
-## Слои архитектуры
+## API Endpoints
 
-### 1. Domain Layer (Доменный слой)
+### POST `/api/splitter/upload`
+Загрузить и разрезать OpenAPI спецификацию
 
-**Ответственность**: Содержит бизнес-логику и правила предметной области.
+**Request:**
+- `multipart/form-data`:
+  - `file` (required): YAML файл
+  - `path` (optional): базовый путь для сохранения (если не указан, используется имя файла)
+- или `application/json`:
+  ```json
+  {
+    "content": "openapi: 3.0.0\n...",
+    "path": "docs/my-api"
+  }
+  ```
 
-**Что здесь находится:**
-- **Entities** (`domain/entities/`) - основные бизнес-сущности с методами
-- **Value Objects** (`domain/value-objects/`) - неизменяемые объекты-значения
-- **Interfaces** (`domain/interfaces/`) - контракты для зависимостей
-- **Exceptions** (`domain/exceptions/`) - доменные исключения
-
-
-**Правила:**
-- Не зависит от других слоев
-- Не знает о HTTP, базе данных, внешних сервисах
-- Содержит только бизнес-логику
-- Не содержит зависимостей от фреймворков
-
-### 2. Application Layer (Слой приложения)
-
-**Ответственность**: Координирует выполнение бизнес-операций (Use Cases).
-
-**Что здесь находится:**
-- **Use Cases** (`application/use-cases/`) - бизнес-операции приложения
-- **DTOs** (`application/dto/`) - объекты для передачи данных между слоями
-
-**Правила:**
-- Зависит только от Domain слоя
-- Использует интерфейсы из Domain для зависимостей
-- Не знает о конкретных реализациях (HTTP, база данных)
-- Не содержит бизнес-логики (она в Domain)
-
-### 3. Infrastructure Layer (Инфраструктурный слой)
-
-**Ответственность**: Реализует технические детали (парсинг, HTTP клиенты, база данных).
-
-**Что здесь находится:**
-- **Parsers** (`infrastructure/parsers/`) - парсеры YAML/JSON
-- **External** (`infrastructure/external/`) - клиенты внешних сервисов
-- **Persistence** (`infrastructure/persistence/`) - репозитории для базы данных
-
-**Правила:**
-- Реализует интерфейсы из Domain слоя
-- Может использовать внешние библиотеки (js-yaml, axios, pg)
-- Содержит технические детали реализации
-- Не содержит бизнес-логики
-
-### 4. Presentation Layer (Слой представления)
-
-**Ответственность**: Обрабатывает HTTP запросы и формирует ответы.
-
-**Что здесь находится:**
-- **Controllers** (`presentation/controllers/`) - обработчики HTTP запросов
-- **Routes** (`presentation/routes/`) - маршрутизация
-- **Middleware** (`presentation/middleware/`) - промежуточное ПО Express
-
-**Правила:**
-- Зависит от Application и Domain слоев
-- Тонкий слой - только валидация входных данных и форматирование ответов
-- Не содержит бизнес-логики
-- Не знает о деталях реализации инфраструктуры
-
-### 5. Shared Layer (Общий слой)
-
-**Ответственность**: Общие утилиты и конфигурация, используемые всеми слоями.
-
-**Что здесь находится:**
-- **Config** (`shared/config/`) - конфигурация приложения
-- **Utils** (`shared/utils/`) - утилиты (logger, helpers)
-
-**Правила:**
-- Не содержит бизнес-логики
-- Может использоваться любым слоем
-- Не должен создавать циклические зависимости
-
-## Поток данных
-
-```
-HTTP Request
-    ↓
-Presentation Layer (Controller)
-    ↓
-Application Layer (Use Case)
-    ↓
-Domain Layer (Entity)
-    ↓
-Infrastructure Layer (Parser, FileStorage)
-    ↓
-External Services / Database
-```
-
-**Пример потока для разделения спецификации:**
-
-1. **HTTP Request** → `POST /api/splitter/split` с YAML контентом
-2. **Controller** → Валидирует входные данные, вызывает Use Case
-3. **Use Case** → Координирует выполнение:
-   - Вызывает Parser для парсинга
-   - Вызывает Entity.split() для разделения
-   - Вызывает FileStorage для сохранения
-4. **Entity** → Выполняет бизнес-логику разделения
-5. **Infrastructure** → Реализует технические детали (парсинг, сохранение)
-6. **Response** → Возвращает результат через Controller
-
-## Принципы проектирования
-
-### Dependency Rule (Правило зависимостей)
-
-**Зависимости направлены внутрь** - от внешних слоев к внутренним:
-
-```
-Presentation → Application → Domain ← Infrastructure
-```
-
-- Domain не зависит ни от чего
-- Application зависит только от Domain
-- Infrastructure реализует интерфейсы из Domain
-- Presentation зависит от Application и Domain
-
-### Interface Segregation (Разделение интерфейсов)
-
-Интерфейсы в Domain слое определяют только то, что нужно:
-
-```typescript
-// domain/interfaces/spec-parser.interface.ts
-export interface ISpecParser {
-  parse(content: string): Promise<OpenAPISpec>;
-  parseObject(spec: Record<string, unknown>): OpenAPISpec;
+**Response (201):**
+```json
+{
+  "success": true,
+  "data": {
+    "rootFile": {
+      "id": "uuid",
+      "path": "docs/my-api/openapi.yaml",
+      "originalName": "openapi.yaml",
+      "size": 1024,
+      "createdAt": "2024-01-15T10:30:00.000Z"
+    },
+    "tree": [...],
+    "totalFiles": 15
+  }
 }
 ```
 
-### Single Responsibility (Единственная ответственность)
+### GET `/api/splitter/tree`
+Получить дерево всех документов
 
-Каждый класс отвечает за одну вещь:
-- `OpenAPISpec` - только логика работы со спецификацией
-- `SplitOpenAPISpecUseCase` - только координация разделения
-- `YamlSpecParser` - только парсинг
-- `SplitController` - только обработка HTTP запросов
-
-## Разработка
-
-### Установка зависимостей
-
-```bash
-bun install
+**Response (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "tree": [
+      {
+        "key": "doc-id",
+        "label": "openapi.yaml",
+        "data": { "type": "document", "fileId": "uuid" },
+        "children": [...]
+      }
+    ]
+  }
+}
 ```
 
-### Запуск в режиме разработки
+### GET `/api/splitter/files/:id`
+Получить метаданные файла
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "path": "docs/my-api/components/schemas/User.yaml",
+    "originalName": "User.yaml",
+    "size": 256,
+    "mimeType": "text/yaml",
+    "createdAt": "2024-01-15T10:30:00.000Z"
+  }
+}
+```
+
+### GET `/api/splitter/files/:id/content`
+Получить файл с контентом
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "metadata": { ... },
+    "content": "type: object\nproperties:\n  id:\n    type: string\n..."
+  }
+}
+```
+
+### DELETE `/api/splitter/by-path?path=...`
+Удалить документ со всеми слайсами
+
+**Response (204):** No content
+
+### DELETE `/api/splitter/files/:id`
+Удалить один файл
+
+**Response (204):** No content
+
+### GET `/api/splitter/by-path/export/zip?path=...`
+Скачать ZIP архив с документом
+
+**Response (200):** Binary (application/zip)
+
+### GET `/api/splitter/health`
+Health check
+
+**Response (200):**
+```json
+{
+  "status": "ok",
+  "timestamp": "..."
+}
+```
+
+## Технологии
+
+- **Runtime:** Bun
+- **Framework:** Express.js
+- **Language:** TypeScript
+- **YAML Parser:** js-yaml
+- **OpenAPI Validator:** @apidevtools/swagger-parser
+- **HTTP Client:** axios
+- **Archive:** archiver
+
+## Зависимости
+
+- **files-service** - для хранения файлов (порт 8001)
+
+## Переменные окружения
 
 ```bash
+PORT=8000                                                      # Порт сервиса
+NODE_ENV=development                                           # Окружение
+FILES_SERVICE_URL=http://files-service:8002                   # URL files-service
+CORS_ORIGIN=http://localhost:5173                             # CORS origin
+```
+
+## Запуск
+
+### Development
+
+```bash
+# Установка зависимостей
+bun install
+
+# Запуск в dev режиме
 bun run dev
 ```
 
-### Сборка
+### Production
 
 ```bash
+# Сборка
 bun run build
+
+# Запуск
+bun start
 ```
 
-### Запуск в production
+### Docker
 
 ```bash
-bun run start
+# Сборка образа
+docker build -t openapi-splitter-service .
+
+# Запуск контейнера
+docker run -p 8000:8000 \
+  -e FILES_SERVICE_URL=http://files-service:8002 \
+  openapi-splitter-service
 ```
 
-### Проверка типов
+## API Documentation
+
+Swagger UI доступен по адресу: `http://localhost:8000/api/splitter/docs`
+
+## Примеры использования
+
+### Загрузка спецификации (файл)
 
 ```bash
-bun run type-check
+curl -X POST http://localhost:8000/api/splitter/upload \
+  -F "file=@openapi.yaml" \
+  -F "path=docs/my-api"
 ```
 
-### Линтинг
+### Загрузка спецификации (JSON)
 
 ```bash
-bun run lint
+curl -X POST http://localhost:8000/api/splitter/upload \
+  -H "Content-Type: application/json" \
+  -d '{
+    "content": "openapi: 3.0.0\ninfo:\n  title: My API\n...",
+    "path": "docs/my-api"
+  }'
 ```
+
+### Получение дерева
+
+```bash
+curl http://localhost:8000/api/splitter/tree
+```
+
+### Получение файла с контентом
+
+```bash
+curl http://localhost:8000/api/splitter/files/{id}/content
+```
+
+### Скачивание ZIP
+
+```bash
+curl -o my-api.zip "http://localhost:8000/api/splitter/by-path/export/zip?path=docs/my-api"
+```
+
+### Удаление документа
+
+```bash
+curl -X DELETE "http://localhost:8000/api/splitter/by-path?path=docs/my-api"
+```
+
+## Обработка ошибок
+
+Все ошибки возвращаются в едином формате:
+
+```json
+{
+  "success": false,
+  "error": {
+    "message": "Invalid YAML syntax",
+    "code": "INVALID_YAML"
+  }
+}
+```
+
+### Коды ошибок
+
+- `INVALID_YAML` - невалидный YAML синтаксис
+- `INVALID_OPENAPI` - невалидная OpenAPI спецификация
+- `SPEC_TOO_LARGE` - файл слишком большой (>50MB)
+- `FILE_NOT_FOUND` - файл не найден
+- `MISSING_PATH` - отсутствует обязательный параметр path
+- `NO_INPUT` - не предоставлен ни файл, ни контент
+- `VALIDATION_FAILED` - ошибка валидации OpenAPI
+- `INTERNAL_ERROR` - внутренняя ошибка сервера
+
+---
+
+## Улучшения
+
+Планируемые или рекомендуемые доработки для production-ready сценариев:
+
+- **Тестирование** — unit-тесты для use cases (upload, split, tree), парсера и валидатора (Jest/Vitest), интеграционные тесты для API (supertest), опционально e2e. Покрытие: загрузка и разрезка YAML, получение дерева и файлов, удаление по path, экспорт ZIP.
+- **Rate limiter** — ограничение частоты запросов по IP или по ключу (например, express-rate-limit), отдельные лимиты для upload (тяжёлая операция) и для read, чтобы защититься от злоупотреблений и DDoS.
+- **Redis** — кэш дерева и списков по path prefix для снижения количества запросов к files-service; счётчики для rate limiting; при необходимости — очереди для фоновой разрезки больших спецификаций.
+- **SSE для загрузки** — Server-Sent Events для длительных загрузок: поток событий с прогрессом (парсинг → валидация → разрезка → сохранение в files-service), чтобы фронт мог показывать индикатор и не зависать на долгих запросах.

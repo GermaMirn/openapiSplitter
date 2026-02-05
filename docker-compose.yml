@@ -13,8 +13,6 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      db-splitter:
-        condition: service_healthy
       files-service:
         condition: service_started
     networks:
@@ -59,26 +57,6 @@ services:
       timeout: 5s
       retries: 3
       start_period: 60s
-    networks:
-      - app-network
-
-  db-splitter:
-    image: postgres:15
-    container_name: db-splitter
-    environment:
-      - POSTGRES_DB=${SPLITTER_DB_NAME:-openapi_splitter}
-      - POSTGRES_USER=${SPLITTER_DB_USER:-postgres}
-      - POSTGRES_PASSWORD=${SPLITTER_DB_PASSWORD:-postgres}
-    ports:
-      - "5432:5432"
-    volumes:
-      - db_splitter_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -h localhost -p 5432 -U postgres || exit 1"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
     networks:
       - app-network
 
@@ -148,7 +126,6 @@ services:
   #     - app-network
 
 volumes:
-  db_splitter_data:
   db_files_data:
   files_storage:
   vite_cache:

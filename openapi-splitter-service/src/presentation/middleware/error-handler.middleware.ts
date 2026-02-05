@@ -1,6 +1,19 @@
 import { Request, Response, NextFunction } from 'express';
-import { logger } from '../../shared/utils/logger';
-import { DomainException } from '../../domain/exceptions/domain-exceptions';
+import { logger } from '@/shared/utils/logger';
+import { DomainException } from '@/domain/exceptions';
+import type { LogValue } from '@/shared/types';
+
+/**
+ * Создаёт объект для логирования ошибки
+ */
+function createErrorLogContext(req: Request, err: Error, code?: string): LogValue {
+  return {
+    path: req.path,
+    method: req.method,
+    code: code ?? 'UNKNOWN',
+    stack: err.stack ?? null,
+  };
+}
 
 /**
  * Middleware для обработки ошибок
@@ -14,12 +27,10 @@ export const errorHandler = (
 ) => {
   // Если это доменное исключение, используем его статус код
   if (err instanceof DomainException) {
-    logger.error(`Domain error ${err.statusCode}: ${err.message}`, {
-      path: req.path,
-      method: req.method,
-      code: err.code,
-      stack: err.stack,
-    });
+    logger.error(
+      `Domain error ${err.statusCode}: ${err.message}`,
+      createErrorLogContext(req, err, err.code)
+    );
 
     return res.status(err.statusCode).json({
       success: false,
@@ -35,11 +46,10 @@ export const errorHandler = (
   const statusCode = 500;
   const message = err.message || 'Internal Server Error';
 
-  logger.error(`Error ${statusCode}: ${message}`, {
-    path: req.path,
-    method: req.method,
-    stack: err.stack,
-  });
+  logger.error(
+    `Error ${statusCode}: ${message}`,
+    createErrorLogContext(req, err, 'INTERNAL_ERROR')
+  );
 
   return res.status(statusCode).json({
     success: false,

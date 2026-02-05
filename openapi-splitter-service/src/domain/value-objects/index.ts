@@ -1,1 +1,2 @@
-// Placeholder file for git tracking
+export { VirtualPath } from './virtual-path';
+export { OpenApiVersion } from './openapi-version';
