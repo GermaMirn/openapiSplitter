@@ -9,6 +9,8 @@ S3-подобный сервис для хранения и управления
 - [Слои архитектуры](#слои-архитектуры)
 - [Принципы проектирования](#принципы-проектирования)
 - [Разработка](#разработка)
+- [API](#api)
+- [Улучшения](#улучшения)
 
 ## Архитектура
 
@@ -47,16 +49,20 @@ src/
 │   ├── use-cases/                          # Use Cases (бизнес-операции)
 │   │   ├── upload-file.use-case.ts
 │   │   ├── get-file.use-case.ts
-│   │   └── delete-file.use-case.ts
+│   │   ├── get-file-content.use-case.ts
+│   │   ├── list-files.use-case.ts
+│   │   ├── delete-file.use-case.ts
+│   │   └── delete-files-by-path.use-case.ts
 │   └── dto/                                # Data Transfer Objects
 │       └── file.dto.ts
 │
 ├── infrastructure/                         # Инфраструктурный слой
 │   ├── storage/                            # Физическое хранилище файлов
 │   │   └── file-system-storage.ts
-│   ├── persistence/                        # Репозитории
+│   ├── persistence/                        # Репозитории (Prisma)
 │   │   └── file-repository.ts
-│   └── database/                           # Подключение к БД
+│   └── database/                           # Подключение к БД (Prisma + adapter-pg)
+│       ├── prisma.ts
 │       └── index.ts
 │
 ├── presentation/                           # Слой представления (HTTP)
@@ -251,3 +257,33 @@ bun run type-check
 ```bash
 bun run lint
 ```
+
+### База данных (Prisma)
+
+- **Миграции (dev):** `bun run db:migrate`
+- **Применить миграции (prod):** `bun run db:migrate:deploy`
+- **Генерация клиента:** `bun run db:generate`
+
+Подключение к PostgreSQL через Prisma 7 и драйвер-адаптер `@prisma/adapter-pg`. URL задаётся в `config.database.url` (env: `DATABASE_URL`).
+
+### API
+
+- `GET /api/files` — список файлов (опционально `?pathPrefix=`)
+- `GET /api/files/by-path?path=` — список по префиксу пути
+- `GET /api/files/:id` — метаданные файла
+- `GET /api/files/:id/content` — содержимое файла
+- `POST /api/files/upload` — загрузка (S3-like: перезапись по пути)
+- `DELETE /api/files/:id` — удаление одного файла
+- `DELETE /api/files/by-path?path=` — удаление всех файлов по префиксу пути
+
+Swagger: http://localhost:8001/api/files/docs (или через nginx: http://localhost/api/files/docs).
+
+---
+
+## Улучшения
+
+Планируемые или рекомендуемые доработки для production-ready сценариев:
+
+- **Тестирование** — unit-тесты для use cases и репозитория (Jest/Vitest), интеграционные тесты для API (supertest), опционально e2e. Покрытие сценариев: загрузка, получение, удаление, удаление по path.
+- **Rate limiter** — ограничение частоты запросов по IP или по ключу (например, express-rate-limit), отдельные лимиты для upload и для read, чтобы защититься от злоупотреблений и DDoS.
+- **Redis** — кэш метаданных или списков по path prefix для снижения нагрузки на БД; сессии или счётчики для rate limiting; при необходимости — очереди для фоновой очистки storage.

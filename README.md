@@ -35,6 +35,7 @@ Frontend → Nginx → OpenAPI-Splitter-Service → Files-Service
 - **Framework**: Express.js
 - **Language**: TypeScript
 - **Database**: PostgreSQL (pg)
+- **ORM (files-service)**: Prisma 7 + @prisma/adapter-pg
 - **Validation**: Zod
 - **API Documentation**: Swagger (swagger-jsdoc, swagger-ui-express)
 - **OpenAPI Parser**: swagger-parser (openapi-splitter-service)
@@ -85,9 +86,10 @@ openapiSplitter/
 │   ├── src/
 │   │   ├── domain/          # Доменный слой (сущности, value objects, интерфейсы)
 │   │   ├── application/     # Слой приложения (use cases, DTOs)
-│   │   ├── infrastructure/  # Инфраструктурный слой (БД, хранилище, persistence)
-│   │   ├── presentation/    # Слой представления (контроллеры, роуты, middleware)
-│   │   └── shared/          # Общий слой (конфиг, утилиты, типы)
+│   │   ├── infrastructure/  # Инфраструктурный слой (Prisma, хранилище, persistence)
+│   │   ├── presentation/   # Слой представления (контроллеры, роуты, middleware)
+│   │   └── shared/         # Общий слой (конфиг, утилиты, типы)
+│   ├── prisma/             # Схема и миграции Prisma
 │   ├── package.json
 │   ├── Dockerfile
 │   ├── tsconfig.json

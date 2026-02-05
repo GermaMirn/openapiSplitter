@@ -1,1 +1,1 @@
-// Placeholder file for git tracking
+export { File } from './file';

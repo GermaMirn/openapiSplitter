@@ -1,1 +1,2 @@
-// Placeholder file for git tracking
+export type { UploadFileInput, FileDto } from './file.dto';
+export { fileToDto } from './file.dto';

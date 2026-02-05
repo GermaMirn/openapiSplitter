@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { logger } from '../../shared/utils/logger';
-import { DomainException } from '../../domain/exceptions/domain-exceptions';
+import { logger } from '@/shared/utils/logger';
+import { DomainException } from '@/domain/exceptions/domain-exceptions';
 
 /**
  * Middleware для обработки ошибок

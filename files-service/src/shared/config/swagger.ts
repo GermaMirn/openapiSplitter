@@ -11,12 +11,12 @@ const options: swaggerJsdoc.Options = {
     },
     servers: [
       {
-        url: 'http://localhost/api/files',
-        description: 'Development server (through nginx)',
-      },
-      {
         url: `http://localhost:${config.port}`,
         description: 'Direct server access',
+      },
+      {
+        url: 'http://localhost',
+        description: 'Development server (through nginx proxy)',
       },
     ],
     components: {
@@ -39,6 +39,17 @@ const options: swaggerJsdoc.Options = {
                 },
               },
             },
+          },
+        },
+        FileDto: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', format: 'uuid', description: 'Уникальный идентификатор файла' },
+            path: { type: 'string', description: 'Виртуальный путь к файлу' },
+            originalName: { type: 'string', description: 'Исходное имя файла' },
+            size: { type: 'integer', description: 'Размер в байтах' },
+            mimeType: { type: 'string', nullable: true, description: 'MIME-тип' },
+            createdAt: { type: 'string', format: 'date-time', description: 'Дата создания (ISO)' },
           },
         },
       },

@@ -12,3 +12,14 @@ export class DomainException extends Error {
     Object.setPrototypeOf(this, DomainException.prototype);
   }
 }
+
+/**
+ * Файл не найден (по id или path)
+ */
+export class FileNotFoundError extends DomainException {
+  constructor(message: string = 'File not found') {
+    super(message, 'FILE_NOT_FOUND', 404);
+    this.name = 'FileNotFoundError';
+    Object.setPrototypeOf(this, FileNotFoundError.prototype);
+  }
+}

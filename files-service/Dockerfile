@@ -27,18 +27,22 @@ COPY --from=install /temp/prod/node_modules node_modules
 COPY --from=prerelease /app/src ./src
 COPY --from=prerelease /app/package.json ./
 COPY --from=prerelease /app/tsconfig.json ./
+COPY --from=prerelease /app/prisma ./prisma
+COPY --from=prerelease /app/prisma.config.ts ./
+COPY --from=prerelease /app/docker-entrypoint.sh ./
 
 USER bun
-ENTRYPOINT [ "bun", "run", "src/index.ts" ]
+ENTRYPOINT ["sh", "/app/docker-entrypoint.sh"]
+CMD ["bun", "run", "src/index.ts"]
 
 # Development stage
 FROM base AS development
 # Копируем package.json и устанавливаем зависимости
 COPY package.json bun.lockb* ./
 RUN bun install
-# Копируем остальные файлы
+# Копируем остальные файлы (включая prisma для миграций)
 COPY . .
-# Don't switch to bun user to avoid permission issues
-# USER bun
-# Устанавливаем зависимости при запуске, если volume перезаписал node_modules
-CMD ["sh", "-c", "bun install && bun run src/index.ts"]
+# При запуске: генерация клиента, миграции (с baseline при P3005), затем сервер
+COPY docker-entrypoint.sh ./
+ENTRYPOINT ["sh", "/app/docker-entrypoint.sh"]
+CMD ["sh", "-c", "bun install && bunx prisma generate && bun run src/index.ts"]
