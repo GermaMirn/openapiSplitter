@@ -7,6 +7,7 @@ import type {
   ListFilesUseCase,
   DeleteFileUseCase,
   DeleteFilesByPathPrefixUseCase,
+  UpdateFileContentUseCase,
 } from '@/application/use-cases';
 import { FilePath } from '@/domain/value-objects';
 
@@ -25,6 +26,7 @@ export interface FileControllerDeps {
   listFilesUseCase: ListFilesUseCase;
   deleteFileUseCase: DeleteFileUseCase;
   deleteFilesByPathPrefixUseCase: DeleteFilesByPathPrefixUseCase;
+  updateFileContentUseCase: UpdateFileContentUseCase;
 }
 
 /**
@@ -39,6 +41,7 @@ export function createFileController(deps: FileControllerDeps): Router {
     listFilesUseCase,
     deleteFileUseCase,
     deleteFilesByPathPrefixUseCase,
+    updateFileContentUseCase,
   } = deps;
 
   /**
@@ -319,6 +322,61 @@ export function createFileController(deps: FileControllerDeps): Router {
         });
       }
       await deleteFilesByPathPrefixUseCase.execute(path);
+      res.status(204).send();
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // ——— PUT /api/files/:id/content ———
+  /**
+   * @swagger
+   * /api/files/{id}/content:
+   *   put:
+   *     summary: Обновить содержимое файла
+   *     description: Обновляет содержимое существующего файла
+   *     tags: [Files]
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *           format: uuid
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         multipart/form-data:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - file
+   *             properties:
+   *               file:
+   *                 type: string
+   *                 format: binary
+   *     responses:
+   *       204:
+   *         description: Содержимое обновлено
+   *       404:
+   *         description: Файл не найден
+   */
+  router.put('/:id/content', upload.single('file'), async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const id = req.params.id;
+
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          error: { message: 'No file provided', code: 'NO_FILE' },
+        });
+      }
+
+      await updateFileContentUseCase.execute({
+        id,
+        buffer: req.file.buffer,
+      });
+
       res.status(204).send();
     } catch (err) {
       next(err);

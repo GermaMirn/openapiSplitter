@@ -35,7 +35,7 @@ const getTreeUseCase = new GetTreeUseCase(filesServiceClient, treeBuilder);
 const getFileUseCase = new GetFileUseCase(filesServiceClient);
 const getFileContentUseCase = new GetFileContentUseCase(filesServiceClient);
 const deleteByPathUseCase = new DeleteByPathUseCase(filesServiceClient);
-const deleteFileUseCase = new DeleteFileUseCase(filesServiceClient);
+const deleteFileUseCase = new DeleteFileUseCase(filesServiceClient, yamlParser);
 const exportZipUseCase = new ExportZipUseCase(filesServiceClient);
 
 /**

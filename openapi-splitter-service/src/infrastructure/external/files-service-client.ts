@@ -100,6 +100,29 @@ export class FilesServiceClient {
   }
 
   /**
+   * Получить список файлов по префиксу пути
+   */
+  async getFilesByPath(pathPrefix: string): Promise<FileDto[]> {
+    return this.listFiles(pathPrefix);
+  }
+
+  /**
+   * Обновить содержимое файла
+   */
+  async updateFileContent(id: string, content: Buffer): Promise<void> {
+    try {
+      const formData = new FormData();
+      formData.append('file', content, { filename: 'updated.yaml' });
+
+      await this.client.put(`/${id}/content`, formData, {
+        headers: formData.getHeaders(),
+      });
+    } catch (error) {
+      return this.handleFileError(error as CaughtError, id);
+    }
+  }
+
+  /**
    * Обработка ошибок файловых операций
    * @throws FileNotFoundError если файл не найден или ID невалиден
    * @throws Error оригинальная ошибка если это не 404/400

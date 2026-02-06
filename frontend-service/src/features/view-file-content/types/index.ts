@@ -7,3 +7,13 @@ export interface FileContentResult {
   /** Ключ узла */
   key: string;
 }
+
+/** Результат загрузки содержимого файла */
+export interface UseFileContentResult {
+  /** Данные содержимого файла */
+  data: FileContentResult | null;
+  /** Флаг загрузки */
+  isLoading: boolean;
+  /** Ошибка загрузки */
+  error: string | null;
+}

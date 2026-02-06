@@ -12,4 +12,6 @@ export interface IFileRepository {
   delete(id: FileId): Promise<void>;
   /** Удалить все файлы, путь которых начинается с pathPrefix */
   deleteManyByPathPrefix(pathPrefix: string): Promise<void>;
+  /** Обновить размер файла */
+  updateSize(id: string, size: number): Promise<void>;
 }

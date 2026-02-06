@@ -5,6 +5,8 @@ export interface FilePreviewProps {
   onConfirm: () => void;
   /** Вызов при отмене (кнопка «Отменить») */
   onCancel: () => void;
+  /** Блокировка кнопок */
+  disabled?: boolean;
   /** Дополнительный класс контейнера */
   className?: string;
 }

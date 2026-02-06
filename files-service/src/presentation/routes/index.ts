@@ -8,6 +8,7 @@ import {
   ListFilesUseCase,
   DeleteFileUseCase,
   DeleteFilesByPathPrefixUseCase,
+  UpdateFileContentUseCase,
 } from '@/application/use-cases';
 import { FileRepository } from '@/infrastructure/persistence';
 import { FileSystemStorage } from '@/infrastructure/storage';
@@ -20,6 +21,7 @@ const getFileContentUseCase = new GetFileContentUseCase(fileRepository, fileStor
 const listFilesUseCase = new ListFilesUseCase(fileRepository);
 const deleteFileUseCase = new DeleteFileUseCase(fileRepository, fileStorage);
 const deleteFilesByPathPrefixUseCase = new DeleteFilesByPathPrefixUseCase(fileRepository, fileStorage);
+const updateFileContentUseCase = new UpdateFileContentUseCase(fileRepository, fileStorage);
 
 /**
  * Создаёт роутер приложения с зарегистрированными маршрутами.
@@ -35,6 +37,7 @@ export function createAppRouter(): Router {
     listFilesUseCase,
     deleteFileUseCase,
     deleteFilesByPathPrefixUseCase,
+    updateFileContentUseCase,
   }));
 
   return router;

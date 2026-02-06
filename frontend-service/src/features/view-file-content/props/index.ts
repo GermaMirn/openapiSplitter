@@ -1,7 +1,11 @@
-import type { FileContentResult } from '../types';
+import type { TreeNode } from '@/shared/types';
 
-export interface FileContentPreviewProps {
-  /** Данные файла для отображения. Если null — показать подсказку. */
-  file: FileContentResult | null;
+export interface FileContentProps {
+  selectedKey: string | null;
+  nodes: TreeNode[];
+  /** Callback после удаления файла */
+  onFileDeleted?: () => void;
+  /** Callback при клике на $ref для навигации */
+  onRefClick?: (refPath: string) => void;
   className?: string;
 }

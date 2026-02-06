@@ -1,11 +1,12 @@
-import type { TreeNode } from 'primereact/treenode';
+import type { TreeNode, TreeNodeType } from '@/shared/types';
 import { NODE_TYPE_ICON } from '../constants';
-import type { TreeNodeType } from '../types';
 
-/** Добавляет иконки узлам по data.type. Вызывается при отдаче данных в UI. */
+/**
+ * Добавляет иконки узлам дерева по типу
+ */
 export function addIconsToNodes(nodes: TreeNode[]): TreeNode[] {
   return nodes.map((node) => {
-    const type = (node.data as { type?: TreeNodeType } | undefined)?.type ?? 'folder';
+    const type = node.data?.type ?? ('folder' as TreeNodeType);
     const icon = NODE_TYPE_ICON[type];
     return {
       ...node,

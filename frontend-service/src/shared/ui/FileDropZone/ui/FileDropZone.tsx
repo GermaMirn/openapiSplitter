@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Button } from 'src/shared/ui/Button';
+import { Button } from '@/shared/ui/Button';
 import type { FileDropZoneProps } from '../props';
 import { DEFAULT_ACCEPT } from '../constants';
 

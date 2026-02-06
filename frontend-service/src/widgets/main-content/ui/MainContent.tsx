@@ -1,20 +1,38 @@
 import React from 'react';
-import { Button, FileDropZone, FilePreview } from 'src/shared/ui';
-import { FileContent } from 'src/features/view-file-content';
+import { FileDropZone, FilePreview } from '@/shared/ui';
+import { FileContent } from '@/features/view-file-content';
 import type { MainContentProps } from '../props';
 
 export const MainContent: React.FC<MainContentProps> = ({
-  hasUploaded,
+  showUploadZone,
   pendingFile,
   onFileSelect,
   onConfirmUpload,
   onCancelPreview,
-  onResetUpload,
   selectedKey,
   treeNodes,
+  isUploading = false,
+  onFileDeleted,
+  onRefClick,
   className = '',
 }) => {
-  if (!hasUploaded) {
+  // Приоритет 1: Если выбран файл из дерева - показываем его
+  if (selectedKey) {
+    return (
+      <div className={`flex flex-col h-full min-h-0 ${className}`}>
+        <FileContent
+          selectedKey={selectedKey}
+          nodes={treeNodes}
+          onFileDeleted={onFileDeleted}
+          onRefClick={onRefClick}
+        />
+      </div>
+    );
+  }
+
+  // Приоритет 2: Если показываем зону загрузки
+  if (showUploadZone) {
+    // Есть файл на предпросмотре
     if (pendingFile) {
       return (
         <div className={`flex flex-col h-full min-h-0 ${className}`}>
@@ -23,10 +41,13 @@ export const MainContent: React.FC<MainContentProps> = ({
             onConfirm={onConfirmUpload}
             onCancel={onCancelPreview}
             className="flex-1 min-h-0"
+            disabled={isUploading}
           />
         </div>
       );
     }
+
+    // Показываем FileDropZone
     return (
       <div className={`flex flex-col h-full min-h-0 ${className}`}>
         <FileDropZone
@@ -40,20 +61,10 @@ export const MainContent: React.FC<MainContentProps> = ({
     );
   }
 
+  // Приоритет 3: Пустой экран (ничего не выбрано)
   return (
-    <div className={`p-4 h-full flex flex-col min-h-0 ${className}`}>
-      <div className="mb-4 flex items-center gap-2 shrink-0">
-        <span className="text-sm text-gray-600">Документ загружен.</span>
-        <Button
-          label="Загрузить другой файл"
-          link
-          onClick={onResetUpload}
-          className="text-sm p-0"
-        />
-      </div>
-      <div className="flex-1 min-h-0 overflow-auto">
-        <FileContent selectedKey={selectedKey} nodes={treeNodes} />
-      </div>
+    <div className={`flex flex-col h-full min-h-0 items-center justify-center ${className}`}>
+      <p className="text-gray-500 text-sm">Выберите файл из дерева или загрузите новый</p>
     </div>
   );
 };

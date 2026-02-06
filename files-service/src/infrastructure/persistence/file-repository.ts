@@ -82,6 +82,13 @@ export class FileRepository implements IFileRepository {
     });
   }
 
+  async updateSize(id: string, size: number): Promise<void> {
+    await prisma.file.update({
+      where: { id },
+      data: { size: BigInt(size) },
+    });
+  }
+
   private rowToFile(row: {
     id: string;
     path: string;
