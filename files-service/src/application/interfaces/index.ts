@@ -1,2 +1,1 @@
-export type { ITreeBuilder, TreeBuildableFile } from './tree-builder.interface';
 export type { IRateLimitStore, RateLimitConsumeResult } from './rate-limit-store.interface';

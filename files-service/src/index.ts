@@ -5,12 +5,15 @@ import swaggerUi from 'swagger-ui-express';
 import { config } from '@/shared/config/config';
 import { swaggerSpec } from '@/shared/config/swagger';
 import { logger } from '@/shared/utils/logger';
+import { createRateLimitStore } from '@/infrastructure/rate-limit';
 import { errorHandler } from '@/presentation/middleware/error-handler.middleware';
+import { createRateLimiterMiddleware } from '@/presentation/middleware/rate-limiter.middleware';
 import { createAppRouter } from '@/presentation/routes';
 
 dotenv.config();
 
 const app = express();
+app.set('trust proxy', 1);
 
 // middleware
 app.use(cors({
@@ -19,6 +22,15 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '150mb' }));
 app.use(express.urlencoded({ extended: true, limit: '150mb' }));
+
+// rate limit
+const rateLimitStore = createRateLimitStore({
+  redisUrl: config.redis.url,
+  keyPrefix: 'rl:files',
+  max: config.rateLimit.max,
+  windowSec: config.rateLimit.windowSec,
+});
+app.use(createRateLimiterMiddleware(rateLimitStore));
 
 // swagger ui
 app.use('/api/files/docs', swaggerUi.serve);

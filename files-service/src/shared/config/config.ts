@@ -28,4 +28,11 @@ export const config = {
     path: resolveStoragePath(),
   },
   corsOrigin: process.env.CORS_ORIGIN || '*',
+  redis: {
+    url: process.env.REDIS_URL || '',
+  },
+  rateLimit: {
+    max: parseInt(process.env.RATE_LIMIT_MAX || '45', 10),
+    windowSec: parseInt(process.env.RATE_LIMIT_WINDOW_SEC || '60', 10),
+  },
 };

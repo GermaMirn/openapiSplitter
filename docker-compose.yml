@@ -1,4 +1,21 @@
 services:
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    networks:
+      - app-network
+
   openapi-splitter-service:
     build:
       context: ./openapi-splitter-service
@@ -15,6 +32,8 @@ services:
     depends_on:
       files-service:
         condition: service_started
+      redis:
+        condition: service_healthy
     networks:
       - app-network
 
@@ -34,6 +53,8 @@ services:
       - "8001:8001"
     depends_on:
       db-files:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - app-network
@@ -127,6 +148,7 @@ services:
 volumes:
   db_files_data:
   files_storage:
+  redis_data:
   vite_cache:
   # prometheus_data:
   # grafana_data:

@@ -17,6 +17,8 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "ioredis": "^5.3.2",
+    "rate-limiter-flexible": "^5.0.3",
     "@apidevtools/swagger-parser": "^12.1.0",
     "ajv": "^8.17.1",
     "archiver": "^7.0.1",
