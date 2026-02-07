@@ -11,6 +11,8 @@ export interface TreeNode {
   key: string;
   /** Отображаемое имя */
   label: string;
+  /** Иконка */
+  icon?: string;
   /** Дополнительные данные узла */
   data?: {
     /** Тип узла */

@@ -9,6 +9,7 @@ React приложение для работы с OpenAPI спецификаци
 - [Слои архитектуры](#слои-архитектуры)
 - [Принципы проектирования](#принципы-проектирования)
 - [Разработка](#разработка)
+- [Технологии](#технологии)
 
 ## Архитектура
 
@@ -250,15 +251,26 @@ npx tsc --noEmit
 bun run lint
 ```
 
+### Тестирование
+
+```bash
+bun run test           # Запуск тестов (Vitest)
+bun run test:watch     # Запуск в watch-режиме
+bun run test:coverage  # Покрытие кода + HTML-отчёт (coverage/index.html)
+```
+
+Тесты используют Vitest, jsdom и @testing-library/react. Unit-тесты расположены в `test/unit/` по структуре FSD (features, shared/ui, widgets).
+
 ## Технологии
 
 - **React 18** - основной фреймворк
 - **TypeScript** - язык программирования с типизацией
 - **Vite** - сборщик и dev server
-- **React Router DOM** - библиотека для маршрутизации
-- **Zustand** - библиотека для управления состоянием
-- **PrimeReact** - библиотека UI компонентов
-- **Tailwind CSS** - CSS фреймворк с утилитарными классами
+- **React Router DOM** - маршрутизация
+- **Zustand** - управление состоянием
+- **PrimeReact + PrimeIcons** - UI библиотека
+- **Tailwind CSS + PostCSS + Autoprefixer** - стилизация
 - **Axios** - HTTP клиент
-- **js-yaml** - библиотека для парсинга YAML
-- **react-syntax-highlighter** - библиотека для подсветки синтаксиса
+- **js-yaml** - парсинг YAML
+- **Monaco Editor** (@monaco-editor/react) - просмотр и навигация по YAML файлам
+- **Vitest + @testing-library/react + jsdom** - тестирование

@@ -173,13 +173,33 @@ cd frontend-service && bun run dev
 
 ### Тестирование
 
-В openapi-splitter-service доступны unit-тесты:
+Unit-тесты доступны во всех сервисах (Vitest + @vitest/coverage-v8):
 
+**OpenAPI Splitter Service:**
 ```bash
 cd openapi-splitter-service
 bun run test           # Запуск тестов
+bun run test:watch     # Запуск в watch-режиме
 bun run test:coverage  # Покрытие + HTML-отчёт (coverage/index.html)
 ```
+
+**Files Service:**
+```bash
+cd files-service
+bun run test           # Запуск тестов
+bun run test:watch     # Запуск в watch-режиме
+bun run test:coverage  # Покрытие + HTML-отчёт
+```
+
+**Frontend Service:**
+```bash
+cd frontend-service
+bun run test           # Запуск тестов
+bun run test:watch     # Запуск в watch-режиме
+bun run test:coverage  # Покрытие + HTML-отчёт (coverage/index.html)
+```
+
+> **Примечание:** Frontend использует Vitest с jsdom и @testing-library/react для тестирования React-компонентов.
 
 ## Мониторинг (опционально)
 
