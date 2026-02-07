@@ -258,6 +258,16 @@ bun run type-check
 bun run lint
 ```
 
+### Тестирование (Vitest)
+
+```bash
+bun run test          # запуск тестов
+bun run test:watch    # watch-режим
+bun run test:coverage # с отчётом покрытия (coverage/index.html)
+```
+
+Unit-тесты покрывают: domain (value-objects, entities, exceptions), application (use-cases), presentation (health.controller, error-handler), shared/utils (logger). Infra слой (Prisma, file storage) исключён из coverage.
+
 ### База данных (Prisma)
 
 - **Миграции (dev):** `bun run db:migrate`
@@ -284,6 +294,6 @@ Swagger: http://localhost:8001/api/files/docs (или через nginx: http://l
 
 Планируемые или рекомендуемые доработки для production-ready сценариев:
 
-- **Тестирование** — unit-тесты для use cases и репозитория (Jest/Vitest), интеграционные тесты для API (supertest), опционально e2e. Покрытие сценариев: загрузка, получение, удаление, удаление по path.
+- **Тестирование** — интеграционные тесты для API (supertest), опционально e2e.
 - **Rate limiter** — ограничение частоты запросов по IP или по ключу (например, express-rate-limit), отдельные лимиты для upload и для read, чтобы защититься от злоупотреблений и DDoS.
 - **Redis** — кэш метаданных или списков по path prefix для снижения нагрузки на БД; сессии или счётчики для rate limiting; при необходимости — очереди для фоновой очистки storage.

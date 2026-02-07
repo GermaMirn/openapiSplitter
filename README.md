@@ -39,7 +39,7 @@ Frontend → Nginx → OpenAPI-Splitter-Service → Files-Service
 - **API Documentation**: Swagger (swagger-jsdoc, swagger-ui-express)
 - **OpenAPI Parser**: swagger-parser (openapi-splitter-service)
 - **File Upload**: multer (files-service)
-- **Testing (openapi-splitter-service)**: Vitest, @vitest/coverage-v8
+- **Testing**: Vitest, @vitest/coverage-v8 (openapi-splitter-service, files-service)
 - **Utilities**: dotenv, cors, axios, uuid (files-service), js-yaml (openapi-splitter-service)
 
 ### Frontend
@@ -91,10 +91,12 @@ openapiSplitter/
 │   │   ├── infrastructure/  # Инфраструктурный слой (Prisma, хранилище, persistence)
 │   │   ├── presentation/   # Слой представления (контроллеры, роуты, middleware)
 │   │   └── shared/         # Общий слой (конфиг, утилиты, типы)
+│   ├── test/               # Unit-тесты (Vitest)
 │   ├── prisma/             # Схема и миграции Prisma
 │   ├── package.json
 │   ├── Dockerfile
 │   ├── tsconfig.json
+│   ├── vitest.config.ts
 │   └── README.md
 └── frontend-service/
     ├── src/

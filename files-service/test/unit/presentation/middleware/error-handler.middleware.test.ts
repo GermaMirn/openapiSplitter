@@ -1,0 +1,113 @@
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { errorHandler } from '@/presentation/middleware/error-handler.middleware';
+import { DomainException } from '@/domain/exceptions';
+
+describe('errorHandler', () => {
+  const originalEnv = process.env.NODE_ENV;
+
+  afterEach(() => {
+    process.env.NODE_ENV = originalEnv;
+  });
+
+  it('возвращает statusCode доменного исключения (успех)', () => {
+    const err = new DomainException('test error', 'TEST_CODE', 400);
+    const req = { path: '/api', method: 'GET' };
+    const res = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
+    const next = vi.fn();
+
+    errorHandler(err, req as never, res as never, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: false,
+        error: expect.objectContaining({
+          message: 'test error',
+          code: 'TEST_CODE',
+        }),
+      })
+    );
+  });
+
+  it('добавляет stack в ответ при NODE_ENV=development (DomainException)', () => {
+    process.env.NODE_ENV = 'development';
+    const err = new DomainException('test', 'CODE', 400);
+    const req = { path: '/api', method: 'GET' };
+    const res = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
+
+    errorHandler(err, req as never, res as never, vi.fn());
+
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: expect.objectContaining({
+          message: 'test',
+          code: 'CODE',
+          stack: expect.any(String),
+        }),
+      })
+    );
+  });
+
+  it('возвращает 500 для обычной ошибки (ошибка)', () => {
+    const err = new Error('internal error');
+    const req = { path: '/api', method: 'GET' };
+    const res = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
+    const next = vi.fn();
+
+    errorHandler(err, req as never, res as never, next);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: false,
+        error: expect.objectContaining({
+          code: 'INTERNAL_ERROR',
+        }),
+      })
+    );
+  });
+
+  it('использует Internal Server Error при пустом message', () => {
+    const err = new Error('');
+    const req = { path: '/api', method: 'GET' };
+    const res = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
+
+    errorHandler(err, req as never, res as never, vi.fn());
+
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: expect.objectContaining({
+          message: 'Internal Server Error',
+          code: 'INTERNAL_ERROR',
+        }),
+      })
+    );
+  });
+
+  it('не добавляет stack при NODE_ENV=production', () => {
+    process.env.NODE_ENV = 'production';
+    const err = new DomainException('test', 'CODE', 400);
+    const req = { path: '/api', method: 'GET' };
+    const res = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
+
+    errorHandler(err, req as never, res as never, vi.fn());
+
+    const callArg = res.json.mock.calls[0][0];
+    expect(callArg.error.stack).toBeUndefined();
+  });
+});

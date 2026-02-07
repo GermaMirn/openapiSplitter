@@ -221,33 +221,15 @@ docker run -p 8000:8000 \
 
 Swagger UI доступен по адресу: `http://localhost:8000/api/splitter/docs`
 
-## Тестирование
+### Тестирование (Vitest)
 
-Unit-тесты реализованы на Vitest. Структура тестов зеркалирует `src/`:
-
-```
-test/unit/
-├── application/use-cases/
-├── domain/entities/
-├── domain/exceptions/
-├── domain/value-objects/
-├── infrastructure/parsers/
-├── infrastructure/splitter/
-├── infrastructure/tree/
-├── infrastructure/validators/
-├── presentation/controllers/
-├── presentation/middleware/
-└── shared/utils/
-```
-
-**Команды:**
 ```bash
-bun run test           # Запуск тестов
-bun run test:watch     # Режим watch
-bun run test:coverage  # Покрытие + HTML-отчёт (coverage/index.html)
+bun run test          # запуск тестов
+bun run test:watch    # watch-режим
+bun run test:coverage # с отчётом покрытия (coverage/index.html)
 ```
 
-**Покрытие:** domain, application use-cases, infrastructure (парсер, splitter, tree, валидатор), presentation (controllers, middleware), shared (logger).
+Unit-тесты покрывают: domain (value-objects, entities, exceptions), application (use-cases), presentation (health.controller, error-handler), shared/utils (logger). Infra слой (Prisma, file storage) исключён из coverage.
 
 ## Примеры использования
 
