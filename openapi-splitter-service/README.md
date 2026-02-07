@@ -155,7 +155,7 @@ Health check
 ```json
 {
   "status": "ok",
-  "timestamp": "..."
+  "service": "openapi-splitter-service"
 }
 ```
 
@@ -168,6 +168,7 @@ Health check
 - **OpenAPI Validator:** @apidevtools/swagger-parser
 - **HTTP Client:** axios
 - **Archive:** archiver
+- **Testing:** Vitest + @vitest/coverage-v8
 
 ## Зависимости
 
@@ -219,6 +220,34 @@ docker run -p 8000:8000 \
 ## API Documentation
 
 Swagger UI доступен по адресу: `http://localhost:8000/api/splitter/docs`
+
+## Тестирование
+
+Unit-тесты реализованы на Vitest. Структура тестов зеркалирует `src/`:
+
+```
+test/unit/
+├── application/use-cases/
+├── domain/entities/
+├── domain/exceptions/
+├── domain/value-objects/
+├── infrastructure/parsers/
+├── infrastructure/splitter/
+├── infrastructure/tree/
+├── infrastructure/validators/
+├── presentation/controllers/
+├── presentation/middleware/
+└── shared/utils/
+```
+
+**Команды:**
+```bash
+bun run test           # Запуск тестов
+bun run test:watch     # Режим watch
+bun run test:coverage  # Покрытие + HTML-отчёт (coverage/index.html)
+```
+
+**Покрытие:** domain, application use-cases, infrastructure (парсер, splitter, tree, валидатор), presentation (controllers, middleware), shared (logger).
 
 ## Примеры использования
 
@@ -296,7 +325,7 @@ curl -X DELETE "http://localhost:8000/api/splitter/by-path?path=docs/my-api"
 
 Планируемые или рекомендуемые доработки для production-ready сценариев:
 
-- **Тестирование** — unit-тесты для use cases (upload, split, tree), парсера и валидатора (Jest/Vitest), интеграционные тесты для API (supertest), опционально e2e. Покрытие: загрузка и разрезка YAML, получение дерева и файлов, удаление по path, экспорт ZIP.
+- **Интеграционные тесты** — e2e/API-тесты для полного цикла запросов (supertest или аналог).
 - **Rate limiter** — ограничение частоты запросов по IP или по ключу (например, express-rate-limit), отдельные лимиты для upload (тяжёлая операция) и для read, чтобы защититься от злоупотреблений и DDoS.
 - **Redis** — кэш дерева и списков по path prefix для снижения количества запросов к files-service; счётчики для rate limiting; при необходимости — очереди для фоновой разрезки больших спецификаций.
 - **SSE для загрузки** — Server-Sent Events для длительных загрузок: поток событий с прогрессом (парсинг → валидация → разрезка → сохранение в files-service), чтобы фронт мог показывать индикатор и не зависать на долгих запросах.

@@ -39,6 +39,7 @@ Frontend → Nginx → OpenAPI-Splitter-Service → Files-Service
 - **API Documentation**: Swagger (swagger-jsdoc, swagger-ui-express)
 - **OpenAPI Parser**: swagger-parser (openapi-splitter-service)
 - **File Upload**: multer (files-service)
+- **Testing (openapi-splitter-service)**: Vitest, @vitest/coverage-v8
 - **Utilities**: dotenv, cors, axios, uuid (files-service), js-yaml (openapi-splitter-service)
 
 ### Frontend
@@ -77,9 +78,11 @@ openapiSplitter/
 │   │   ├── infrastructure/  # Инфраструктурный слой (парсеры, внешние клиенты)
 │   │   ├── presentation/    # Слой представления (контроллеры, роуты, middleware)
 │   │   └── shared/          # Общий слой (конфиг, утилиты, типы)
+│   ├── test                 # Тесты
 │   ├── package.json
 │   ├── Dockerfile
 │   ├── tsconfig.json
+│   ├── vitest.config.ts
 │   └── README.md
 ├── files-service/
 │   ├── src/
@@ -164,6 +167,16 @@ cd files-service && bun run dev
 
 # frontend-service
 cd frontend-service && bun run dev
+```
+
+### Тестирование
+
+В openapi-splitter-service доступны unit-тесты:
+
+```bash
+cd openapi-splitter-service
+bun run test           # Запуск тестов
+bun run test:coverage  # Покрытие + HTML-отчёт (coverage/index.html)
 ```
 
 ## Мониторинг (опционально)
