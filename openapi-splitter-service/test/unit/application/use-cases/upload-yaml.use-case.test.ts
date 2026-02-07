@@ -84,4 +84,147 @@ paths:
       useCase.execute({ buffer: largeBuffer, originalName: 'large.yaml' })
     ).rejects.toThrow(SpecificationTooLargeException);
   });
+
+  it('выбрасывает DomainException при невалидной OpenAPI (ошибка)', async () => {
+    const invalidYaml = `openapi: 3.0.0
+info:
+  title: Test
+  version: 1.0.0
+paths:
+  /path: null`;
+    const filesServiceClient = createMockFilesServiceClient() as never;
+    const useCase = new UploadYamlUseCase(
+      yamlParser,
+      openApiValidator,
+      openApiSplitter,
+      filesServiceClient,
+      treeBuilder
+    );
+
+    await expect(
+      useCase.execute({ content: invalidYaml, originalName: 'api.yaml' })
+    ).rejects.toThrow(DomainException);
+  });
+
+  it('использует extractFileNameWithoutExt при отсутствии path (успех)', async () => {
+    const yaml = `openapi: 3.0.0
+info:
+  title: Test
+  version: 1.0.0
+paths:
+  /health:
+    get: {}`;
+    const mockDeleteFilesByPath = vi.fn().mockResolvedValue(undefined);
+    const mockUploadFile = vi.fn((_b: Buffer, path: string) =>
+      Promise.resolve({
+        id: 'f1',
+        path,
+        size: 0,
+        originalName: 'api.yaml',
+        mimeType: null,
+        createdAt: new Date().toISOString(),
+      })
+    );
+    const filesServiceClient = createMockFilesServiceClient({
+      deleteFilesByPath: mockDeleteFilesByPath,
+      uploadFile: mockUploadFile,
+    }) as never;
+    const useCase = new UploadYamlUseCase(
+      yamlParser,
+      openApiValidator,
+      openApiSplitter,
+      filesServiceClient,
+      treeBuilder
+    );
+
+    const result = await useCase.execute({
+      content: yaml,
+      originalName: 'api.yaml',
+    });
+
+    expect(result.rootFile).toBeDefined();
+    expect(mockDeleteFilesByPath).toHaveBeenCalledWith('api');
+  });
+
+  it('выбрасывает при падении deleteFilesByPath (ошибка)', async () => {
+    const yaml = `openapi: 3.0.0
+info:
+  title: Test
+  version: 1.0.0
+paths:
+  /health:
+    get: {}`;
+    const filesServiceClient = createMockFilesServiceClient({
+      deleteFilesByPath: vi.fn().mockRejectedValue(new Error('Delete failed')),
+    }) as never;
+    const useCase = new UploadYamlUseCase(
+      yamlParser,
+      openApiValidator,
+      openApiSplitter,
+      filesServiceClient,
+      treeBuilder
+    );
+
+    await expect(
+      useCase.execute({ content: yaml, originalName: 'api.yaml' })
+    ).rejects.toThrow('Delete failed');
+  });
+
+  it('выбрасывает при падении deleteFilesByPath (non-Error reject)', async () => {
+    const yaml = `openapi: 3.0.0
+info:
+  title: Test
+  version: 1.0.0
+paths:
+  /health:
+    get: {}`;
+    const filesServiceClient = createMockFilesServiceClient({
+      deleteFilesByPath: vi.fn().mockRejectedValue('string error'),
+    }) as never;
+    const useCase = new UploadYamlUseCase(
+      yamlParser,
+      openApiValidator,
+      openApiSplitter,
+      filesServiceClient,
+      treeBuilder
+    );
+
+    await expect(
+      useCase.execute({ content: yaml, originalName: 'api.yaml' })
+    ).rejects.toBe('string error');
+  });
+
+  it('выбрасывает DomainException если rootFile не найден (ошибка)', async () => {
+    const yaml = `openapi: 3.0.0
+info:
+  title: Test
+  version: 1.0.0
+paths:
+  /health:
+    get: {}`;
+    const mockUploadFile = vi.fn((_b: Buffer, path: string) =>
+      Promise.resolve({
+        id: 'f1',
+        path: path.replace(/openapi\.yaml$/, 'other.yaml'),
+        size: 0,
+        originalName: 'api.yaml',
+        mimeType: null,
+        createdAt: new Date().toISOString(),
+      })
+    );
+    const filesServiceClient = createMockFilesServiceClient({
+      uploadFile: mockUploadFile,
+    }) as never;
+    const useCase = new UploadYamlUseCase(
+      yamlParser,
+      openApiValidator,
+      openApiSplitter,
+      filesServiceClient,
+      treeBuilder
+    );
+
+    await expect(
+      useCase.execute({ content: yaml, originalName: 'api.yaml' })
+    ).rejects.toThrow(DomainException);
+  });
 });

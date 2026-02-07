@@ -17,3 +17,11 @@ export interface UseFileContentResult {
   /** Ошибка загрузки */
   error: string | null;
 }
+
+/** Элемент хлебных крошек: узел дерева для навигации */
+export interface BreadcrumbItem {
+  /** Ключ узла */
+  key: string;
+  /** Отображаемое имя */
+  label: string;
+}

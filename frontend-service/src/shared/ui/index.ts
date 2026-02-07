@@ -1,4 +1,5 @@
 export { Button } from './Button';
+export { Input } from './Input';
 export { CodeViewer } from './CodeViewer';
 export { FileDropZone } from './FileDropZone';
 export { InlineMessage } from './InlineMessage';

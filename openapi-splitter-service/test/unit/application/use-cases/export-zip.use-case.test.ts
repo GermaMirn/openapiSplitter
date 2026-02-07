@@ -37,4 +37,35 @@ describe('ExportZipUseCase', () => {
       expect((e as DomainException).code).toBe('NO_FILES_FOUND');
     }
   });
+
+  it('выбрасывает Error когда getFileContent падает (ошибка)', async () => {
+    const mockListFiles = vi.fn().mockResolvedValue([
+      { id: 'id1', path: 'docs/spec/openapi.yaml' },
+    ]);
+    const mockGetFileContent = vi.fn().mockRejectedValue(new Error('Network error'));
+    const filesServiceClient = {
+      listFiles: mockListFiles,
+      getFileContent: mockGetFileContent,
+    } as never;
+    const useCase = new ExportZipUseCase(filesServiceClient);
+
+    await expect(useCase.execute('docs/spec')).rejects.toThrow(/Failed to add file.*Network error/);
+  });
+
+  it('getRelativePath возвращает полный путь если не начинается с basePrefix (успех)', async () => {
+    const mockListFiles = vi.fn().mockResolvedValue([
+      { id: 'id1', path: 'other/file.yaml' },
+    ]);
+    const mockGetFileContent = vi.fn().mockResolvedValue(Buffer.from('content'));
+    const filesServiceClient = {
+      listFiles: mockListFiles,
+      getFileContent: mockGetFileContent,
+    } as never;
+    const useCase = new ExportZipUseCase(filesServiceClient);
+
+    const result = await useCase.execute('docs/spec');
+
+    expect(result).toBeDefined();
+    expect(mockGetFileContent).toHaveBeenCalled();
+  });
 });

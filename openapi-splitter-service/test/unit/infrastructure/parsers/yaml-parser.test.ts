@@ -40,4 +40,13 @@ paths: {}`;
   it('выбрасывает InvalidYamlException когда результат не объект (ошибка)', async () => {
     await expect(parser.parse('42')).rejects.toThrow(InvalidYamlException);
   });
+
+  it('выбрасывает InvalidYamlException при невалидном YAML-синтаксисе (ошибка)', async () => {
+    await expect(parser.parse('key: "unclosed string')).rejects.toThrow(InvalidYamlException);
+  });
+
+  it('stringify выбрасывает Error при несериализуемом значении (ошибка)', async () => {
+    const obj = { fn: () => {} } as unknown as Parameters<typeof parser.stringify>[0];
+    await expect(parser.stringify(obj)).rejects.toThrow(/Failed to stringify YAML/);
+  });
 });

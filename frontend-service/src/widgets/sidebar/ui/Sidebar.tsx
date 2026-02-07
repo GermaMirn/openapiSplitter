@@ -1,5 +1,6 @@
-import React from 'react';
-import { FileTree, Loader, Button } from '@/shared/ui';
+import React, { useState, useMemo } from 'react';
+import { FileTree, Loader, Button, Input } from '@/shared/ui';
+import { filterTreeByQuery } from '@/shared/ui/FileTree/lib/filter-tree-by-query';
 import { useDeleteDocument } from '@/features/delete-document';
 import { useExportZip } from '@/features/export-zip';
 import { useToast } from '@/shared/lib/toast';
@@ -20,6 +21,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const { deleteDocument } = useDeleteDocument();
   const { exportZip } = useExportZip();
   const toast = useToast();
+  const [searchQuery, setSearchQuery] = useState('');
+  const filteredNodes = useMemo(() => filterTreeByQuery(treeNodes, searchQuery), [treeNodes, searchQuery]);
 
   const handleDocumentDelete = async (path: string) => {
     try {
@@ -57,6 +60,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
           severity='success'
           outlined
         />
+        <div className="p-input-icon-left block mt-2">
+          <Input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value ?? '')}
+            placeholder="Поиск по файлам..."
+            className="w-full"
+          />
+        </div>
       </div>
       <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-0">
         {isLoading ? (
@@ -67,9 +78,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="flex items-center justify-center h-full p-4">
             <p className="text-sm text-gray-500 text-center">Нет загруженных документов</p>
           </div>
+        ) : filteredNodes.length === 0 ? (
+          <div className="flex items-center justify-center h-full p-4">
+            <p className="text-sm text-gray-500 text-center">Ничего не найдено</p>
+          </div>
         ) : (
           <FileTree
-            nodes={treeNodes}
+            nodes={filteredNodes}
             selectedKey={selectedKey}
             onSelect={onSelect}
             expandedKeys={expandedKeys}

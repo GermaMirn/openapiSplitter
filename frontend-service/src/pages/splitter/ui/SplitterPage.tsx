@@ -5,6 +5,7 @@ import { useFileTreeNodes } from '@/features/file-tree-data';
 import { useUploadSpec } from '@/features/upload-spec';
 import { useToast } from '@/shared/lib/toast';
 import { useRefNavigation } from '@/features/view-file-content/hook/use-ref-navigation';
+import { getAncestorKeys } from '@/features/view-file-content/lib/get-ancestor-keys';
 import type { TreeExpandedKeys } from '@/shared/ui/FileTree/props';
 
 export const SplitterPage: React.FC = () => {
@@ -57,6 +58,14 @@ export const SplitterPage: React.FC = () => {
     setSelectedKey(key);
   };
 
+  const handleBreadcrumbSelect = (key: string) => {
+    setBackStack([]);
+    setSelectedKey(key);
+    const ancestors = getAncestorKeys(nodes, key);
+    const keysToExpand = ancestors.reduce<TreeExpandedKeys>((acc, k) => ({ ...acc, [k]: true }), {});
+    setExpandedKeys((prev) => ({ ...prev, ...keysToExpand }));
+  };
+
   const handleFileDeleted = async () => {
     setSelectedKey(null);
     setBackStack([]);
@@ -105,6 +114,7 @@ export const SplitterPage: React.FC = () => {
             onCancelPreview={handleCancelPreview}
             selectedKey={selectedKey}
             treeNodes={nodes}
+            onBreadcrumbSelect={handleBreadcrumbSelect}
             isUploading={isUploading}
             onFileDeleted={handleFileDeleted}
             onRefClick={handleRefClick}

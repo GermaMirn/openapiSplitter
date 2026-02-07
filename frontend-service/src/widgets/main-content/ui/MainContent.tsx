@@ -11,6 +11,7 @@ export const MainContent: React.FC<MainContentProps> = ({
   onCancelPreview,
   selectedKey,
   treeNodes,
+  onBreadcrumbSelect,
   isUploading = false,
   onFileDeleted,
   onRefClick,
@@ -28,6 +29,7 @@ export const MainContent: React.FC<MainContentProps> = ({
         <FileContent
           selectedKey={selectedKey}
           nodes={treeNodes}
+          onBreadcrumbSelect={onBreadcrumbSelect}
           onFileDeleted={onFileDeleted}
           onRefClick={onRefClick}
           scrollContainerRef={scrollContainerRef}

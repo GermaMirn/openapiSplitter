@@ -3,6 +3,8 @@ import type { TreeNode } from '@/shared/types';
 export interface FileContentProps {
   selectedKey: string | null;
   nodes: TreeNode[];
+  /** Callback при клике на хлебную крошку (переход к узлу) */
+  onBreadcrumbSelect?: (key: string) => void;
   /** Callback после удаления файла */
   onFileDeleted?: () => void;
   /** Callback при клике на $ref для навигации */

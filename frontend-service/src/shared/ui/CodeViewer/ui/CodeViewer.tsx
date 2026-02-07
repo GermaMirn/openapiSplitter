@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import Editor, { OnMount } from '@monaco-editor/react';
 import type { editor } from 'monaco-editor';
 import type { CodeViewerProps } from '../props';
+import { Loader } from '@/shared/ui/Loader';
 import { useMonacoScroll } from '../hooks';
 import { setupYamlLinks, injectLinkStyles } from '../lib';
 
@@ -60,6 +61,7 @@ export const CodeViewer: React.FC<CodeViewerProps> = ({
         language={language}
         value={content}
         theme="vs-light"
+        loading={<Loader />}
         onMount={handleEditorDidMount}
         options={{
           readOnly: true,

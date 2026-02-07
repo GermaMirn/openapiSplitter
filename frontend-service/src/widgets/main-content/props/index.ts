@@ -15,6 +15,8 @@ export interface MainContentProps {
   selectedKey: string | null;
   /** Узлы дерева (для фичи просмотра файла) */
   treeNodes: TreeNode[];
+  /** Callback при клике на хлебную крошку */
+  onBreadcrumbSelect?: (key: string) => void;
   /** Флаг: идёт ли загрузка файла */
   isUploading?: boolean;
   /** Callback после удаления файла */
