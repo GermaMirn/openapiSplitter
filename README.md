@@ -6,12 +6,11 @@
 
 Проект состоит из следующих сервисов:
 
-- **openapi-splitter-service** (порт 8000) - сервис для парсинга и разделения OpenAPI спецификаций
+- **openapi-splitter-service** (порт 8000) - сервис для парсинга и разделения OpenAPI спецификаций (БД не использует)
 - **files-service** (порт 8001) - S3-like сервис для работы с файлами (сохранение, получение, удаление)
 - **frontend-service** (порт 5173) - React приложение
 - **nginx** (порт 80) - reverse proxy для маршрутизации запросов
-- **db-splitter** (порт 5432) - PostgreSQL база данных для openapi-splitter-service
-- **db-files** (порт 5434) - PostgreSQL база данных для files-service
+- **db-files** (порт 5434 на хосте → 5432 в контейнере) - PostgreSQL для files-service
 
 ## Схема взаимодействия
 
@@ -52,7 +51,7 @@ Frontend → Nginx → OpenAPI-Splitter-Service → Files-Service
 - **Styling**: Tailwind CSS + PostCSS + Autoprefixer
 - **HTTP Client**: Axios
 - **YAML Parser**: js-yaml
-- **Code Highlighting**: react-syntax-highlighter
+- **Code Editor**: Monaco Editor (@monaco-editor/react) - для просмотра и навигации по YAML файлам
 - **Architecture**: Feature-Sliced Design (FSD)
 - **Package Manager**: Bun
 
@@ -151,9 +150,9 @@ cd ../files-service && bun install
 cd ../frontend-service && bun install
 ```
 
-2. Запустите базы данных:
+2. Запустите БД:
 ```bash
-docker-compose up db-splitter db-files -d
+docker-compose up db-files -d
 ```
 
 3. Запустите сервисы локально (в отдельных терминалах):

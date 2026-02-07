@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Sidebar } from '@/widgets/sidebar';
 import { MainContent } from '@/widgets/main-content';
 import { useFileTreeNodes } from '@/features/file-tree-data';
 import { useUploadSpec } from '@/features/upload-spec';
 import { useToast } from '@/shared/lib/toast';
 import { useRefNavigation } from '@/features/view-file-content/hook/use-ref-navigation';
+import type { TreeExpandedKeys } from '@/shared/ui/FileTree/props';
 
 export const SplitterPage: React.FC = () => {
   const { nodes, isLoading: isLoadingTree, refetch } = useFileTreeNodes();
@@ -12,8 +13,12 @@ export const SplitterPage: React.FC = () => {
   const toast = useToast();
 
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [expandedKeys, setExpandedKeys] = useState<TreeExpandedKeys>({});
+  const [backStack, setBackStack] = useState<Array<{ key: string; scrollTop: number }>>([]);
+  const [restoreScroll, setRestoreScroll] = useState<number | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [showUploadZone, setShowUploadZone] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const handleFileChosen = (file: File) => {
     setPendingFile(file);
@@ -44,28 +49,54 @@ export const SplitterPage: React.FC = () => {
   const handleOpenUploadZone = () => {
     setShowUploadZone(true);
     setSelectedKey(null);
+    setBackStack([]);
+  };
+
+  const handleTreeSelect = (key: string | null) => {
+    setBackStack([]);
+    setSelectedKey(key);
   };
 
   const handleFileDeleted = async () => {
     setSelectedKey(null);
+    setBackStack([]);
     await refetch();
   };
 
-  const handleRefClick = useRefNavigation(nodes, selectedKey, setSelectedKey);
+  const refNavigate = useRefNavigation(nodes, selectedKey, setSelectedKey, setExpandedKeys);
+
+  const handleRefClick = (refPath: string) => {
+    const scrollTop = scrollContainerRef.current?.scrollTop ?? 0;
+    if (selectedKey) setBackStack((prev) => [...prev, { key: selectedKey, scrollTop }]);
+    refNavigate(refPath);
+  };
+
+  const handleBack = () => {
+    const item = backStack[backStack.length - 1];
+    if (!item) return;
+    setBackStack((prev) => prev.slice(0, -1));
+    setSelectedKey(item.key);
+    setRestoreScroll(item.scrollTop);
+  };
 
   return (
     <div className="h-screen flex overflow-hidden bg-gray-50">
       <Sidebar
         treeNodes={nodes}
         selectedKey={selectedKey}
-        onSelect={setSelectedKey}
+        onSelect={handleTreeSelect}
+        expandedKeys={expandedKeys}
+        onExpandedKeysChange={setExpandedKeys}
         isLoading={isLoadingTree}
         onOpenUpload={handleOpenUploadZone}
         refetch={refetch}
-        onDocumentDeleted={() => setSelectedKey(null)}
+        onDocumentDeleted={() => {
+          setSelectedKey(null);
+          setBackStack([]);
+        }}
       />
       <main className="flex-1 min-w-0 min-h-0 flex flex-col overflow-hidden bg-white">
-        <div className="flex-1 min-h-0 overflow-auto p-5">
+        <div className="flex-1 min-h-0 p-5 flex flex-col">
           <MainContent
             showUploadZone={showUploadZone}
             pendingFile={pendingFile}
@@ -77,6 +108,12 @@ export const SplitterPage: React.FC = () => {
             isUploading={isUploading}
             onFileDeleted={handleFileDeleted}
             onRefClick={handleRefClick}
+            scrollContainerRef={scrollContainerRef}
+            showBackButton={backStack.length > 0}
+            onBack={handleBack}
+            restoreScroll={restoreScroll}
+            onScrollRestored={() => setRestoreScroll(null)}
+            className="flex-1 min-h-0"
           />
         </div>
       </main>

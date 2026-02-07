@@ -21,5 +21,15 @@ export interface MainContentProps {
   onFileDeleted?: () => void;
   /** Callback при клике на $ref */
   onRefClick?: (refPath: string) => void;
+  /** Ref на контейнер скролла (для сохранения позиции при переходе по $ref) */
+  scrollContainerRef?: React.RefObject<HTMLDivElement | null>;
+  /** Показывать кнопку «Назад» (после перехода по $ref) */
+  showBackButton?: boolean;
+  /** Callback кнопки «Назад» */
+  onBack?: () => void;
+  /** Восстановить скролл после возврата (значение scrollTop) */
+  restoreScroll?: number | null;
+  /** Вызов после восстановления скролла */
+  onScrollRestored?: () => void;
   className?: string;
 }

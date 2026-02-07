@@ -11,6 +11,14 @@ export default defineConfig({
       src: path.resolve(__dirname, './src'),
     },
   },
+  optimizeDeps: {
+    include: ['monaco-editor'],
+  },
+  build: {
+    commonjsOptions: {
+      include: [/monaco-editor/, /node_modules/],
+    },
+  },
   server: {
     host: '0.0.0.0',
     port: 5173,
@@ -22,5 +30,5 @@ export default defineConfig({
     headers: {
       'Access-Control-Allow-Origin': '*',
     },
-  },
+  }
 });

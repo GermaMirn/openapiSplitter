@@ -11,6 +11,8 @@ export const FileTree: React.FC<FileTreeProps> = ({
   nodes,
   selectedKey,
   onSelect,
+  expandedKeys,
+  onToggle,
   onDocumentDelete,
   onDocumentExport,
   className = '',
@@ -37,13 +39,14 @@ export const FileTree: React.FC<FileTreeProps> = ({
             {
               label: 'Скачать архив',
               icon: 'pi pi-download',
+              className: 'menu-item-info',
               command: () => onDocumentExport(documentBasePath),
             },
             {
               label: 'Удалить',
               icon: 'pi pi-trash',
-              command: () => onDocumentDelete(documentBasePath),
               className: 'text-red-600',
+              command: () => onDocumentDelete(documentBasePath),
             },
           ]
         : [];
@@ -67,6 +70,8 @@ export const FileTree: React.FC<FileTreeProps> = ({
       value={nodes}
       selectionMode="single"
       selectionKeys={selectedKey ?? undefined}
+      expandedKeys={expandedKeys}
+      onToggle={onToggle ? (e) => onToggle(e.value) : undefined}
       onSelectionChange={(e) => handleSelectionChange(e as { value: string | null })}
       nodeTemplate={nodeTemplate}
       className={className}

@@ -47,7 +47,6 @@ services:
       - "5173:5173"
     volumes:
       - ./frontend-service:/app
-      - /app/node_modules
       - vite_cache:/tmp/.vite
     environment:
       - NODE_ENV=development
@@ -68,7 +67,7 @@ services:
       - POSTGRES_USER=${FILES_DB_USER:-postgres}
       - POSTGRES_PASSWORD=${FILES_DB_PASSWORD:-postgres}
     ports:
-      - "5434:5434"
+      - "5434:5432"
     volumes:
       - db_files_data:/var/lib/postgresql/data
     healthcheck:

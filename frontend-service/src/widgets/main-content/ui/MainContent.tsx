@@ -14,6 +14,11 @@ export const MainContent: React.FC<MainContentProps> = ({
   isUploading = false,
   onFileDeleted,
   onRefClick,
+  scrollContainerRef,
+  showBackButton = false,
+  onBack,
+  restoreScroll,
+  onScrollRestored,
   className = '',
 }) => {
   // Приоритет 1: Если выбран файл из дерева - показываем его
@@ -25,6 +30,11 @@ export const MainContent: React.FC<MainContentProps> = ({
           nodes={treeNodes}
           onFileDeleted={onFileDeleted}
           onRefClick={onRefClick}
+          scrollContainerRef={scrollContainerRef}
+          showBackButton={showBackButton}
+          onBack={onBack}
+          restoreScroll={restoreScroll}
+          onScrollRestored={onScrollRestored}
         />
       </div>
     );

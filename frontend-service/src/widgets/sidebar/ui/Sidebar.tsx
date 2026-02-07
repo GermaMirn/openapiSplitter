@@ -9,6 +9,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   treeNodes,
   selectedKey,
   onSelect,
+  expandedKeys,
+  onExpandedKeysChange,
   isLoading = false,
   onOpenUpload,
   refetch,
@@ -45,12 +47,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <aside className={`w-64 shrink-0 border-r border-gray-200 bg-white flex flex-col overflow-hidden ${className}`}>
       <div className="p-4 border-b border-gray-100 shrink-0">
         <h1 className="text-lg font-semibold text-gray-900 mb-3">OpenAPI Splitter</h1>
+        <hr className="border-0 border-t border-gray-100 -mx-4 my-0" />
         <Button
           label="Загрузить файл"
           icon="pi pi-plus"
           onClick={onOpenUpload}
-          className="w-full"
+          className="w-full mt-3"
           size="small"
+          severity='success'
           outlined
         />
       </div>
@@ -68,6 +72,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             nodes={treeNodes}
             selectedKey={selectedKey}
             onSelect={onSelect}
+            expandedKeys={expandedKeys}
+            onToggle={onExpandedKeysChange}
             onDocumentDelete={handleDocumentDelete}
             onDocumentExport={handleDocumentExport}
             className="p-0"

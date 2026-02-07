@@ -18,13 +18,13 @@
 /* PrimeReact severity — явно, т.к. Tailwind перезаписывает */
 .p-button.p-button-success:not(:disabled) {
   background-color: transparent !important;
-  border-color: #22c55e !important;
-  color: #22c55e !important;
+  border-color: #2ed96d !important;
+  color: #2ed96d !important;
 }
 .p-button.p-button-success:not(:disabled):hover {
   background: rgba(34, 197, 94, 0.04) !important;
-  border-color: #16a34a !important;
-  color: #16a34a !important;
+  border-color: #34ba65 !important;
+  color: #34ba65 !important;
 }
 .p-button.p-button-danger.p-button-outlined:not(:disabled) {
   color: #ef4444 !important;
@@ -35,7 +35,34 @@
   background: rgba(239, 68, 68, 0.04) !important;
 }
 
-/* Loader — градиентное кольцо (синий → зелёный) */
+.p-button.p-button-info:not(:disabled) {
+  background-color: transparent !important;
+  border-color: #60a5fa !important;
+  color: #60a5fa !important;
+}
+.p-button.p-button-info:not(:disabled):hover {
+  background: rgba(96, 165, 250, 0.08) !important;
+  border-color: #3b82f6 !important;
+  color: #3b82f6 !important;
+}
+
+.p-menu .p-menuitem.menu-item-info .p-menuitem-content .p-menuitem-link .p-menuitem-text,
+.p-menu .p-menuitem.menu-item-info .p-menuitem-content .p-menuitem-link .p-menuitem-icon {
+  color: #60a5fa !important;
+}
+.p-menu .p-menuitem.menu-item-info .p-menuitem-content:hover .p-menuitem-link .p-menuitem-text,
+.p-menu .p-menuitem.menu-item-info .p-menuitem-content:hover .p-menuitem-link .p-menuitem-icon {
+  color: #3b82f6 !important;
+}
+.p-menu .p-menuitem.text-red-600 .p-menuitem-content .p-menuitem-link .p-menuitem-text,
+.p-menu .p-menuitem.text-red-600 .p-menuitem-content .p-menuitem-link .p-menuitem-icon {
+  color: #ef4444 !important;
+}
+.p-menu .p-menuitem.text-red-600 .p-menuitem-content:hover .p-menuitem-link .p-menuitem-text,
+.p-menu .p-menuitem.text-red-600 .p-menuitem-content:hover .p-menuitem-link .p-menuitem-icon {
+  color: #ef4444 !important;
+}
+
 .loader-ring {
   width: 48px;
   height: 48px;

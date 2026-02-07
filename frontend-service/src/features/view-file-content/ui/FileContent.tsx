@@ -1,7 +1,6 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import { useFileContent } from '../hook/use-file-content';
 import { useDeleteFile } from '@/features/delete-file';
-import { useClickableYamlRefs } from '../hook/use-clickable-yaml-refs';
 import { useToast } from '@/shared/lib/toast';
 import { CodeViewer, Loader, Button } from '@/shared/ui';
 import { findNodeByKey } from '../lib/find-node-by-key';
@@ -12,14 +11,16 @@ export const FileContent: React.FC<FileContentProps> = ({
   nodes,
   onFileDeleted,
   onRefClick,
+  scrollContainerRef,
+  showBackButton = false,
+  onBack,
+  restoreScroll,
+  onScrollRestored,
   className = '',
 }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
   const { data, isLoading, error } = useFileContent(selectedKey, nodes);
   const { deleteFile, isDeleting } = useDeleteFile();
   const toast = useToast();
-
-  useClickableYamlRefs(containerRef, data?.content ?? '', onRefClick, !!onRefClick);
 
   const selectedNode = selectedKey ? findNodeByKey(nodes, selectedKey) : null;
   const fileId = selectedNode?.data?.fileId;
@@ -60,19 +61,36 @@ export const FileContent: React.FC<FileContentProps> = ({
   const showDeleteButton = fileId && !isDocument;
 
   return (
-    <div className={`flex flex-col rounded-lg border border-gray-200 bg-white overflow-hidden ${className}`}>
+    <div className={`flex flex-col h-full rounded-lg border border-gray-200 bg-white overflow-hidden ${className}`}>
       <div className="px-4 py-2 border-b border-gray-200 bg-gray-50 shrink-0">
         <p className="text-sm font-medium text-gray-700 truncate" title={data.label}>
           {data.label}
         </p>
       </div>
 
-      <div ref={containerRef} className="flex flex-1 min-h-0 flex-col overflow-auto p-4">
-        <CodeViewer content={data.content} language="yaml" className="rounded" />
+      <div className="flex flex-1 min-h-0 flex-col overflow-hidden">
+        <CodeViewer
+          content={data.content}
+          language="yaml"
+          className="flex-1 min-h-0"
+          scrollContainerRef={scrollContainerRef}
+          restoreScroll={restoreScroll}
+          onScrollRestored={onScrollRestored}
+          onRefClick={onRefClick}
+        />
       </div>
 
-      {showDeleteButton && (
-        <div className="flex justify-end gap-2 px-4 py-3 border-t border-gray-200 bg-gray-50 shrink-0">
+      <div className="flex justify-end gap-2 px-4 py-3 border-t border-gray-200 bg-gray-50 shrink-0">
+        {showBackButton && onBack && (
+          <Button
+            label="Вернуться назад"
+            onClick={onBack}
+            severity="info"
+            outlined
+            className="mr-auto"
+          />
+        )}
+        {showDeleteButton && (
           <Button
             label={isDeleting ? 'Удаление...' : 'Удалить файл'}
             icon={isDeleting ? 'pi pi-spin pi-spinner' : 'pi pi-trash'}
@@ -81,8 +99,8 @@ export const FileContent: React.FC<FileContentProps> = ({
             outlined
             disabled={isDeleting}
           />
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };

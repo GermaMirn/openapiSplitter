@@ -10,7 +10,7 @@ RUN mkdir -p /tmp/.vite && chmod -R 777 /tmp/.vite
 # Install dependencies
 FROM base AS install
 RUN mkdir -p /temp/dev
-COPY package.json bun.lockb* /temp/dev/
+COPY package.json bun.lock* /temp/dev/
 RUN cd /temp/dev && bun install --frozen-lockfile
 
 # Copy node_modules from temp directory
@@ -25,4 +25,4 @@ COPY --from=prerelease /app/node_modules node_modules
 COPY --from=prerelease /app .
 # Don't switch to bun user to avoid permission issues
 # USER bun
-ENTRYPOINT [ "bun", "run", "dev", "--", "--host", "0.0.0.0" ]
+ENTRYPOINT [ "sh", "-c", "bun install && exec bun run dev -- --host 0.0.0.0" ]
