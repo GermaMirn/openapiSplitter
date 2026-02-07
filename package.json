@@ -1,0 +1,11 @@
+{
+  "name": "openapi-splitter",
+  "private": true,
+  "scripts": {
+    "prepare": "node -e \"require('fs').existsSync('.git') && require('child_process').execSync('npx husky', {stdio: 'inherit'})\""
+  },
+  "devDependencies": {
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.10"
+  }
+}
