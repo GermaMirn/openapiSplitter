@@ -42,6 +42,7 @@ jobs:
         run: |
           cd files-service
           bun install --frozen-lockfile
+          bun run db:generate
           bun run test:coverage
 
       - name: Test frontend-service
