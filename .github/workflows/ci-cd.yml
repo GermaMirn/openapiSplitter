@@ -39,6 +39,8 @@ jobs:
           bun run test:coverage
 
       - name: Test files-service
+        env:
+          DATABASE_URL: postgresql://user:pass@localhost:5432/files_service
         run: |
           cd files-service
           bun install --frozen-lockfile
