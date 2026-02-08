@@ -23,7 +23,7 @@ export class FilesServiceClient {
 
   constructor(baseUrl: string) {
     this.client = axios.create({
-      baseURL: `${baseUrl}/api/files`,
+      baseURL: `${baseUrl}/api/v1/files`,
       timeout: 30000,
     });
   }

@@ -26,6 +26,16 @@ vi.mock('ioredis', () => ({
 const logger = vi.hoisted(() => ({ warn: vi.fn(), info: vi.fn(), error: vi.fn(), debug: vi.fn() }));
 vi.mock('@/shared/utils/logger', () => ({ logger }));
 
+vi.mock('@/shared/config/config', () => ({
+  config: {
+    redis: {
+      maxRetriesPerRequest: 5,
+      retryDelayMs: 200,
+      retryMaxDelayMs: 3000,
+    },
+  },
+}));
+
 describe('getRedis', () => {
   it('при пустом url возвращает null', () => {
     expect(getRedis('')).toBeNull();
@@ -44,14 +54,14 @@ describe('getRedis', () => {
     expect(fakeClient.quit).toHaveBeenCalled();
   });
 
-  it('retryStrategy: при times > 3 возвращает null, иначе задержку', () => {
+  it('retryStrategy: при times > maxRetriesPerRequest возвращает null, иначе задержку из config', () => {
     getRedis('redis://localhost:6379');
     const { retryStrategy } = lastRedisOptions.current!;
 
     expect(retryStrategy!(1)).toBe(200);
     expect(retryStrategy!(3)).toBe(600);
-    expect(retryStrategy!(4)).toBeNull();
-    expect(retryStrategy!(5)).toBeNull();
+    expect(retryStrategy!(5)).toBe(1000);
+    expect(retryStrategy!(6)).toBeNull();
   });
 
   it('при событии error на клиенте вызывается logger.warn', () => {

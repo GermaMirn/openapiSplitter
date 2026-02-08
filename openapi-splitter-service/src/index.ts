@@ -32,17 +32,18 @@ const rateLimitStore = createRateLimitStore({
 });
 app.use(createRateLimiterMiddleware(rateLimitStore));
 
-// swagger ui
-app.use('/api/splitter/docs', swaggerUi.serve);
-app.get(['/api/splitter/docs', '/api/splitter/docs/'], swaggerUi.setup(null, {
+// swagger ui (под версионированным путём API)
+const docsBase = `/api/${config.api.version}/splitter/docs`;
+app.use(`${docsBase}`, swaggerUi.serve);
+app.get([docsBase, `${docsBase}/`], swaggerUi.setup(null, {
   customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: 'OpenAPI Splitter API Docs',
   swaggerOptions: {
     persistAuthorization: true,
-    url: '/api/splitter/docs/swagger.json',
+    url: `${docsBase}/swagger.json`,
   },
 }));
-app.get('/api/splitter/docs/swagger.json', (_req, res) => res.send(swaggerSpec));
+app.get(`${docsBase}/swagger.json`, (_req, res) => res.send(swaggerSpec));
 
 // routes
 app.use(createAppRouter());

@@ -96,8 +96,8 @@ export class OpenApiSplitter implements IOpenApiSplitter {
           `${basePath.toString()}/components/${componentType}/${componentName}.yaml`
         );
 
-        // Относительная ссылка из корневого файла
-        const relativeRef = `./components/${componentType}/${componentName}.yaml`;
+        // Абсолютная ссылка из корневого файла
+        const relativeRef = `#/components/${componentType}/${componentName}.yaml`;
         refsOut[componentType][componentName] = { $ref: relativeRef };
 
         // Содержимое: сам компонент

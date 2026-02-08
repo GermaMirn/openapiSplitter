@@ -1,4 +1,5 @@
 import express, { Router } from 'express';
+import { config } from '@/shared/config/config';
 import { healthRouter } from '@/presentation/controllers';
 import { createFileController } from '@/presentation/controllers/file.controller';
 import {
@@ -23,14 +24,16 @@ const deleteFileUseCase = new DeleteFileUseCase(fileRepository, fileStorage);
 const deleteFilesByPathPrefixUseCase = new DeleteFilesByPathPrefixUseCase(fileRepository, fileStorage);
 const updateFileContentUseCase = new UpdateFileContentUseCase(fileRepository, fileStorage);
 
+const apiBase = `/api/${config.api.version}/files`;
+
 /**
- * Создаёт роутер приложения с зарегистрированными маршрутами.
-*/
+ * Создаёт роутер приложения с зарегистрированными маршрутами (версионированный API).
+ */
 export function createAppRouter(): Router {
   const router = express.Router();
 
-  router.use('/api/files/health', healthRouter);
-  router.use('/api/files', createFileController({
+  router.use(`${apiBase}/health`, healthRouter);
+  router.use(apiBase, createFileController({
     uploadFileUseCase,
     getFileUseCase,
     getFileContentUseCase,

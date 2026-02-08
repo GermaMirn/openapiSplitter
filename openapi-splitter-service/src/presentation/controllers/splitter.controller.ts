@@ -45,7 +45,7 @@ export function createSplitterController(deps: SplitterControllerDeps): Router {
 
   /**
    * @swagger
-   * /api/splitter/upload:
+   * /upload:
    *   post:
    *     summary: Загрузить и разрезать OpenAPI спецификацию
    *     description: Принимает YAML файл или текст, парсит, разрезает по правилам и сохраняет
@@ -157,7 +157,7 @@ export function createSplitterController(deps: SplitterControllerDeps): Router {
 
   /**
    * @swagger
-   * /api/splitter/tree:
+   * /tree:
    *   get:
    *     summary: Получить дерево всех документов
    *     description: Возвращает полное дерево всех загруженных и разрезанных OpenAPI спецификаций
@@ -194,7 +194,7 @@ export function createSplitterController(deps: SplitterControllerDeps): Router {
 
   /**
    * @swagger
-   * /api/splitter/files/{id}/content:
+   * /files/{id}/content:
    *   get:
    *     summary: Получить файл с контентом
    *     description: Возвращает метаданные и содержимое файла
@@ -240,7 +240,7 @@ export function createSplitterController(deps: SplitterControllerDeps): Router {
 
   /**
    * @swagger
-   * /api/splitter/files/{id}:
+   * /files/{id}:
    *   get:
    *     summary: Получить метаданные файла
    *     description: Возвращает метаданные файла по id
@@ -287,7 +287,7 @@ export function createSplitterController(deps: SplitterControllerDeps): Router {
 
   /**
    * @swagger
-   * /api/splitter/by-path:
+   * /by-path:
    *   delete:
    *     summary: Удалить документ со всеми слайсами
    *     description: Удаляет все файлы по префиксу пути (весь документ)
@@ -323,7 +323,7 @@ export function createSplitterController(deps: SplitterControllerDeps): Router {
 
   /**
    * @swagger
-   * /api/splitter/files/{id}:
+   * /files/{id}:
    *   delete:
    *     summary: Удалить файл
    *     description: Удаляет один файл по id
@@ -352,7 +352,7 @@ export function createSplitterController(deps: SplitterControllerDeps): Router {
 
   /**
    * @swagger
-   * /api/splitter/by-path/export/zip:
+   * /by-path/export/zip:
    *   get:
    *     summary: Экспорт документа в ZIP
    *     description: Скачать ZIP архив со всей структурой файлов по пути

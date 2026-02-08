@@ -4,7 +4,7 @@ export const healthRouter = Router();
 
 /**
  * @swagger
- * /api/files/health:
+ * /health:
  *   get:
  *     summary: Health check endpoint
  *     tags: [Health]

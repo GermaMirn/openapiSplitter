@@ -1,18 +1,25 @@
 import Redis from 'ioredis';
+import { config } from '@/shared/config/config';
 import { logger } from '@/shared/utils/logger';
 
 let client: Redis | null = null;
 
-/** Возвращает общий клиент Redis по URL; при пустом URL или ошибке — null. */
+const {
+  maxRetriesPerRequest,
+  retryDelayMs,
+  retryMaxDelayMs,
+} = config.redis;
+
+/** Возвращает общий клиент Redis по URL; при пустом URL или ошибке — null. Ретраи из config. */
 export function getRedis(url: string): Redis | null {
   if (!url) return null;
   if (client) return client;
   try {
     client = new Redis(url, {
-      maxRetriesPerRequest: 3,
+      maxRetriesPerRequest,
       retryStrategy(times) {
-        if (times > 3) return null;
-        return Math.min(times * 200, 2000);
+        if (times > maxRetriesPerRequest) return null;
+        return Math.min(times * retryDelayMs, retryMaxDelayMs);
       },
     });
     client.on('error', (err) =>

@@ -38,14 +38,16 @@ const deleteByPathUseCase = new DeleteByPathUseCase(filesServiceClient);
 const deleteFileUseCase = new DeleteFileUseCase(filesServiceClient, yamlParser);
 const exportZipUseCase = new ExportZipUseCase(filesServiceClient);
 
+const apiBase = `/api/${config.api.version}/splitter`;
+
 /**
- * Создаёт роутер приложения с зарегистрированными маршрутами
-*/
+ * Создаёт роутер приложения с зарегистрированными маршрутами (версионированный API)
+ */
 export function createAppRouter(): Router {
   const router = express.Router();
 
-  router.use('/api/splitter/health', healthRouter);
-  router.use('/api/splitter', createSplitterController({
+  router.use(`${apiBase}/health`, healthRouter);
+  router.use(apiBase, createSplitterController({
     uploadYamlUseCase,
     getTreeUseCase,
     getFileUseCase,

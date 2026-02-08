@@ -5,6 +5,7 @@ import swaggerUi from 'swagger-ui-express';
 import { config } from '@/shared/config/config';
 import { swaggerSpec } from '@/shared/config/swagger';
 import { logger } from '@/shared/utils/logger';
+import { connectDatabaseWithRetry } from '@/infrastructure/database';
 import { createRateLimitStore } from '@/infrastructure/rate-limit';
 import { errorHandler } from '@/presentation/middleware/error-handler.middleware';
 import { createRateLimiterMiddleware } from '@/presentation/middleware/rate-limiter.middleware';
@@ -32,17 +33,18 @@ const rateLimitStore = createRateLimitStore({
 });
 app.use(createRateLimiterMiddleware(rateLimitStore));
 
-// swagger ui
-app.use('/api/files/docs', swaggerUi.serve);
-app.get(['/api/files/docs', '/api/files/docs/'], swaggerUi.setup(null, {
+// swagger ui (под версионированным путём API)
+const docsBase = `/api/${config.api.version}/files/docs`;
+app.use(`${docsBase}`, swaggerUi.serve);
+app.get([docsBase, `${docsBase}/`], swaggerUi.setup(null, {
   customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: 'Files Service API Docs',
   swaggerOptions: {
     persistAuthorization: true,
-    url: '/api/files/docs/swagger.json',
+    url: `${docsBase}/swagger.json`,
   },
 }));
-app.get('/api/files/docs/swagger.json', (_req, res) => res.send(swaggerSpec));
+app.get(`${docsBase}/swagger.json`, (_req, res) => res.send(swaggerSpec));
 
 // routes
 app.use(createAppRouter());
@@ -50,8 +52,16 @@ app.use(createAppRouter());
 // error handler
 app.use(errorHandler);
 
-app.listen(config.port, '0.0.0.0', () => {
-  logger.info(`Files Service running on port ${config.port}`);
+async function start(): Promise<void> {
+  await connectDatabaseWithRetry();
+  app.listen(config.port, '0.0.0.0', () => {
+    logger.info(`Files Service running on port ${config.port}`);
+  });
+}
+
+start().catch((err) => {
+  logger.error('Failed to start', { err: err instanceof Error ? err.message : String(err) });
+  process.exit(1);
 });
 
 export default app;

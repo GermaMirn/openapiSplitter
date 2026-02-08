@@ -46,7 +46,7 @@ export function createFileController(deps: FileControllerDeps): Router {
 
   /**
    * @swagger
-   * /api/files/upload:
+   * /upload:
    *   post:
    *     summary: Загрузить файл
    *     description: Загружает файл в хранилище и сохраняет метаданные в БД
@@ -122,10 +122,10 @@ export function createFileController(deps: FileControllerDeps): Router {
    *             schema:
    *               $ref: '#/components/schemas/Error'
    */
-  // ——— GET /api/files (list all, optional pathPrefix) ———
+  // ——— GET /api/v1/files (list all, optional pathPrefix) ———
   /**
    * @swagger
-   * /api/files:
+   * /api/v1/files:
    *   get:
    *     summary: Список файлов
    *     description: Возвращает все файлы или файлы по префиксу пути (pathPrefix)
@@ -162,10 +162,10 @@ export function createFileController(deps: FileControllerDeps): Router {
     }
   });
 
-  // ——— GET /api/files/by-path?path= (list by path prefix) ———
+  // ——— GET /by-path?path= (list by path prefix) ———
   /**
    * @swagger
-   * /api/files/by-path:
+   * /by-path:
    *   get:
    *     summary: Список файлов по пути
    *     description: Возвращает все файлы, путь которых начинается с указанного префикса (слайс/папка)
@@ -211,10 +211,10 @@ export function createFileController(deps: FileControllerDeps): Router {
     }
   });
 
-  // ——— GET /api/files/:id/content (raw content) — must be before GET /:id ———
+  // ——— GET /:id/content (raw content) — must be before GET /:id ———
   /**
    * @swagger
-   * /api/files/{id}/content:
+   * /{id}/content:
    *   get:
    *     summary: Содержимое файла
    *     description: Возвращает сырое содержимое файла по ID
@@ -248,10 +248,10 @@ export function createFileController(deps: FileControllerDeps): Router {
     }
   });
 
-  // ——— GET /api/files/:id (metadata) ———
+  // ——— GET /:id (metadata) ———
   /**
    * @swagger
-   * /api/files/{id}:
+   * /{id}:
    *   get:
    *     summary: Метаданные файла
    *     description: Возвращает метаданные файла по ID
@@ -292,10 +292,10 @@ export function createFileController(deps: FileControllerDeps): Router {
     }
   });
 
-  // DELETE /api/files/by-path?path=
+  // DELETE /by-path?path=
   /**
    * @swagger
-   * /api/files/by-path:
+   * /by-path:
    *   delete:
    *     summary: Удалить файлы по пути
    *     description: Удаляет все файлы, путь которых начинается с указанного префикса (слайс/папка)
@@ -328,10 +328,10 @@ export function createFileController(deps: FileControllerDeps): Router {
     }
   });
 
-  // ——— PUT /api/files/:id/content ———
+  // ——— PUT /:id/content ———
   /**
    * @swagger
-   * /api/files/{id}/content:
+   * /{id}/content:
    *   put:
    *     summary: Обновить содержимое файла
    *     description: Обновляет содержимое существующего файла
@@ -383,10 +383,10 @@ export function createFileController(deps: FileControllerDeps): Router {
     }
   });
 
-  // ——— DELETE /api/files/:id ———
+  // ——— DELETE /:id ———
   /**
    * @swagger
-   * /api/files/{id}:
+   * /{id}:
    *   delete:
    *     summary: Удалить файл
    *     description: Удаляет файл по ID (метаданные и содержимое)

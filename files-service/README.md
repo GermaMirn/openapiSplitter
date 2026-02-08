@@ -176,7 +176,7 @@ File System / Database
 
 **Пример потока для загрузки файла:**
 
-1. **HTTP Request** → `POST /api/files/upload` с файлом
+1. **HTTP Request** → `POST /api/v1/files/upload` с файлом
 2. **Controller** → Валидирует входные данные, вызывает Use Case
 3. **Use Case** → Координирует выполнение:
    - Создает доменную сущность File
@@ -278,15 +278,17 @@ Unit-тесты покрывают: domain (value-objects, entities, exceptions)
 
 ### API
 
-- `GET /api/files` — список файлов (опционально `?pathPrefix=`)
-- `GET /api/files/by-path?path=` — список по префиксу пути
-- `GET /api/files/:id` — метаданные файла
-- `GET /api/files/:id/content` — содержимое файла
-- `POST /api/files/upload` — загрузка (S3-like: перезапись по пути)
-- `DELETE /api/files/:id` — удаление одного файла
-- `DELETE /api/files/by-path?path=` — удаление всех файлов по префиксу пути
+API версионируется через путь (по умолчанию `v1`):
 
-Swagger: http://localhost:8001/api/files/docs (или через nginx: http://localhost/api/files/docs).
+- `GET /api/v1/files` — список файлов (опционально `?pathPrefix=`)
+- `GET /api/v1/files/by-path?path=` — список по префиксу пути
+- `GET /api/v1/files/:id` — метаданные файла
+- `GET /api/v1/files/:id/content` — содержимое файла
+- `POST /api/v1/files/upload` — загрузка (S3-like: перезапись по пути)
+- `DELETE /api/v1/files/:id` — удаление одного файла
+- `DELETE /api/v1/files/by-path?path=` — удаление всех файлов по префиксу пути
+
+Swagger: http://localhost:8001/api/v1/files/docs (или через nginx: http://localhost/api/v1/files/docs).
 
 ---
 

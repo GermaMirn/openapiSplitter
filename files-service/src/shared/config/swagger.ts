@@ -11,12 +11,12 @@ const options: swaggerJsdoc.Options = {
     },
     servers: [
       {
-        url: `http://localhost:${config.port}`,
-        description: 'Direct server access',
+        url: `http://localhost:${config.port}/api/${config.api.version}/files`,
+        description: 'Direct server (versioned API)',
       },
       {
-        url: 'http://localhost',
-        description: 'Development server (through nginx proxy)',
+        url: `http://localhost/api/${config.api.version}/files`,
+        description: 'Behind proxy (versioned API)',
       },
     ],
     components: {

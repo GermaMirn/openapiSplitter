@@ -48,7 +48,9 @@ src/
 
 ## API Endpoints
 
-### POST `/api/splitter/upload`
+API версионируется через путь (по умолчанию `v1`):
+
+### POST `/api/v1/splitter/upload`
 Загрузить и разрезать OpenAPI спецификацию
 
 **Request:**
@@ -81,7 +83,7 @@ src/
 }
 ```
 
-### GET `/api/splitter/tree`
+### GET `/api/v1/splitter/tree`
 Получить дерево всех документов
 
 **Response (200):**
@@ -101,7 +103,7 @@ src/
 }
 ```
 
-### GET `/api/splitter/files/:id`
+### GET `/api/v1/splitter/files/:id`
 Получить метаданные файла
 
 **Response (200):**
@@ -119,7 +121,7 @@ src/
 }
 ```
 
-### GET `/api/splitter/files/:id/content`
+### GET `/api/v1/splitter/files/:id/content`
 Получить файл с контентом
 
 **Response (200):**
@@ -133,22 +135,22 @@ src/
 }
 ```
 
-### DELETE `/api/splitter/by-path?path=...`
+### DELETE `/api/v1/splitter/by-path?path=...`
 Удалить документ со всеми слайсами
 
 **Response (204):** No content
 
-### DELETE `/api/splitter/files/:id`
+### DELETE `/api/v1/splitter/files/:id`
 Удалить один файл
 
 **Response (204):** No content
 
-### GET `/api/splitter/by-path/export/zip?path=...`
+### GET `/api/v1/splitter/by-path/export/zip?path=...`
 Скачать ZIP архив с документом
 
 **Response (200):** Binary (application/zip)
 
-### GET `/api/splitter/health`
+### GET `/api/v1/splitter/health`
 Health check
 
 **Response (200):**
@@ -219,7 +221,7 @@ docker run -p 8000:8000 \
 
 ## API Documentation
 
-Swagger UI доступен по адресу: `http://localhost:8000/api/splitter/docs`
+Swagger UI доступен по адресу: `http://localhost:8000/api/v1/splitter/docs`
 
 ### Тестирование (Vitest)
 
@@ -236,7 +238,7 @@ Unit-тесты покрывают: domain (value-objects, entities, exceptions)
 ### Загрузка спецификации (файл)
 
 ```bash
-curl -X POST http://localhost:8000/api/splitter/upload \
+curl -X POST http://localhost:8000/api/v1/splitter/upload \
   -F "file=@openapi.yaml" \
   -F "path=docs/my-api"
 ```
@@ -244,7 +246,7 @@ curl -X POST http://localhost:8000/api/splitter/upload \
 ### Загрузка спецификации (JSON)
 
 ```bash
-curl -X POST http://localhost:8000/api/splitter/upload \
+curl -X POST http://localhost:8000/api/v1/splitter/upload \
   -H "Content-Type: application/json" \
   -d '{
     "content": "openapi: 3.0.0\ninfo:\n  title: My API\n...",
@@ -255,25 +257,25 @@ curl -X POST http://localhost:8000/api/splitter/upload \
 ### Получение дерева
 
 ```bash
-curl http://localhost:8000/api/splitter/tree
+curl http://localhost:8000/api/v1/splitter/tree
 ```
 
 ### Получение файла с контентом
 
 ```bash
-curl http://localhost:8000/api/splitter/files/{id}/content
+curl http://localhost:8000/api/v1/splitter/files/{id}/content
 ```
 
 ### Скачивание ZIP
 
 ```bash
-curl -o my-api.zip "http://localhost:8000/api/splitter/by-path/export/zip?path=docs/my-api"
+curl -o my-api.zip "http://localhost:8000/api/v1/splitter/by-path/export/zip?path=docs/my-api"
 ```
 
 ### Удаление документа
 
 ```bash
-curl -X DELETE "http://localhost:8000/api/splitter/by-path?path=docs/my-api"
+curl -X DELETE "http://localhost:8000/api/v1/splitter/by-path?path=docs/my-api"
 ```
 
 ## Обработка ошибок
