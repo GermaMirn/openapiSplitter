@@ -1,6 +1,15 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+import * as yaml from 'js-yaml';
 import { YamlParser } from '@/infrastructure/parsers/yaml-parser';
 import { InvalidYamlException } from '@/domain/exceptions';
+
+vi.mock('js-yaml', async (importOriginal) => {
+  const mod = await importOriginal<typeof import('js-yaml')>();
+  return {
+    load: vi.fn((...args: unknown[]) => (mod as { load: (content: string, opts?: unknown) => unknown }).load(...(args as [string, unknown]))),
+    dump: vi.fn((...args: unknown[]) => (mod as { dump: (obj: unknown, opts?: unknown) => unknown }).dump(...(args as [unknown, unknown]))),
+  };
+});
 
 describe('YamlParser', () => {
   const parser = new YamlParser();
@@ -48,5 +57,19 @@ paths: {}`;
   it('stringify выбрасывает Error при несериализуемом значении (ошибка)', async () => {
     const obj = { fn: () => {} } as unknown as Parameters<typeof parser.stringify>[0];
     await expect(parser.stringify(obj)).rejects.toThrow(/Failed to stringify YAML/);
+  });
+
+  it('parse при ошибке не-InvalidYamlException использует message или Unknown (branch)', async () => {
+    vi.mocked(yaml.load).mockImplementationOnce(() => {
+      throw 'non-Error throw';
+    });
+    await expect(parser.parse('valid: yaml')).rejects.toThrow(/Failed to parse YAML: Unknown YAML parsing error/);
+  });
+
+  it('stringify при ошибке не-Error использует Unknown stringify error (branch)', async () => {
+    vi.mocked(yaml.dump).mockImplementationOnce(() => {
+      throw 'string error';
+    });
+    await expect(parser.stringify({ a: 1 })).rejects.toThrow(/Unknown YAML stringify error/);
   });
 });

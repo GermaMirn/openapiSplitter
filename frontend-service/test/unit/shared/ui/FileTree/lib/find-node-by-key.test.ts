@@ -36,4 +36,20 @@ describe('FileTree findNodeByKey', () => {
   it('возвращает null при undefined', () => {
     expect(findNodeByKey(undefined, 'a')).toBeNull();
   });
+
+  it('находит узел по node.id когда key отсутствует (branch 6)', () => {
+    const treeWithId: PrimeTreeNode[] = [
+      { id: 'node-id', label: 'By id', children: [] },
+    ];
+    const node = findNodeByKey(treeWithId, 'node-id');
+    expect(node).not.toBeNull();
+    expect(node!.id).toBe('node-id');
+  });
+
+  it('использует пустую строку когда key и id отсутствуют (branch 6)', () => {
+    const treeNoKey: PrimeTreeNode[] = [{ label: 'Empty key', children: [] }];
+    const node = findNodeByKey(treeNoKey, '');
+    expect(node).not.toBeNull();
+    expect(node!.label).toBe('Empty key');
+  });
 });

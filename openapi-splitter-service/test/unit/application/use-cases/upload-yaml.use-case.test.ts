@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { UploadYamlUseCase } from '@/application/use-cases/upload-yaml.use-case';
+import { UploadYamlUseCase, extractFileNameWithoutExtImpl } from '@/application/use-cases/upload-yaml.use-case';
 import { YamlParser } from '@/infrastructure/parsers/yaml-parser';
 import { OpenApiValidator } from '@/infrastructure/validators/openapi-validator';
 import { OpenApiSplitter } from '@/infrastructure/splitter/openapi-splitter';
@@ -52,6 +52,62 @@ paths:
     expect(result.rootFile).toBeDefined();
     expect(result.tree).toHaveLength(1);
     expect(result.totalFiles).toBeGreaterThan(0);
+  });
+
+  it('успешно загружает при переданном buffer (без content)', async () => {
+    const yaml = `openapi: 3.0.0
+info:
+  title: Test
+  version: 1.0.0
+paths:
+  /health:
+    get: {}`;
+    const filesServiceClient = createMockFilesServiceClient() as never;
+    const useCase = new UploadYamlUseCase(
+      yamlParser,
+      openApiValidator,
+      openApiSplitter,
+      filesServiceClient,
+      treeBuilder
+    );
+
+    const result = await useCase.execute({
+      buffer: Buffer.from(yaml, 'utf-8'),
+      originalName: 'api.yaml',
+    });
+
+    expect(result.rootFile).toBeDefined();
+    expect(result.totalFiles).toBeGreaterThan(0);
+  });
+
+  it('использует path когда передан (базовый путь из input.path)', async () => {
+    const yaml = `openapi: 3.0.0
+info:
+  title: Test
+  version: 1.0.0
+paths:
+  /health:
+    get: {}`;
+    const mockDeleteFilesByPath = vi.fn().mockResolvedValue(undefined);
+    const filesServiceClient = createMockFilesServiceClient({
+      deleteFilesByPath: mockDeleteFilesByPath,
+    }) as never;
+    const useCase = new UploadYamlUseCase(
+      yamlParser,
+      openApiValidator,
+      openApiSplitter,
+      filesServiceClient,
+      treeBuilder
+    );
+
+    const result = await useCase.execute({
+      content: yaml,
+      originalName: 'api.yaml',
+      path: 'my/docs',
+    });
+
+    expect(result.rootFile).toBeDefined();
+    expect(mockDeleteFilesByPath).toHaveBeenCalledWith('my/docs');
   });
 
   it('выбрасывает DomainException если нет content и buffer (ошибка)', async () => {
@@ -226,5 +282,82 @@ paths:
     await expect(
       useCase.execute({ content: yaml, originalName: 'api.yaml' })
     ).rejects.toThrow(DomainException);
+  });
+
+  it('использует file.yaml когда путь файла даёт пустой pop() (branch)', async () => {
+    const yaml = `openapi: 3.0.0
+info:
+  title: Test
+  version: 1.0.0
+paths:
+  /health:
+    get: {}`;
+    const mockSplit = vi.fn().mockResolvedValue({
+      files: [
+        { path: { toString: () => 'docs/spec/' }, content: 'x' },
+        { path: { toString: () => 'docs/spec/openapi.yaml' }, content: 'openapi: 3.0.0' },
+      ],
+    });
+    const mockUploadFile = vi.fn((_b: Buffer, path: string, fileName: string) =>
+      Promise.resolve({
+        id: 'f1',
+        path,
+        size: 0,
+        originalName: fileName,
+        mimeType: null,
+        createdAt: new Date().toISOString(),
+      })
+    );
+    const filesServiceClient = createMockFilesServiceClient({ uploadFile: mockUploadFile }) as never;
+    const useCase = new UploadYamlUseCase(
+      yamlParser,
+      openApiValidator,
+      { split: mockSplit } as never,
+      filesServiceClient,
+      treeBuilder
+    );
+
+    await useCase.execute({ content: yaml, originalName: 'api.yaml', path: 'docs/spec' });
+
+    expect(mockUploadFile).toHaveBeenNthCalledWith(1, expect.any(Buffer), 'docs/spec/', 'file.yaml');
+  });
+
+  it('extractFileNameWithoutExt при имени только расширении возвращает name (branch)', async () => {
+    const yaml = `openapi: 3.0.0
+info:
+  title: Test
+  version: 1.0.0
+paths:
+  /health:
+    get: {}`;
+    const filesServiceClient = createMockFilesServiceClient() as never;
+    const useCase = new UploadYamlUseCase(
+      yamlParser,
+      openApiValidator,
+      openApiSplitter,
+      filesServiceClient,
+      treeBuilder
+    );
+
+    const result = await useCase.execute({ content: yaml, originalName: '.yaml' });
+
+    expect(result.rootFile).toBeDefined();
+    expect(result.tree).toHaveLength(1);
+  });
+
+  it('extractFileNameWithoutExtImpl при pop() пустом использует fileName (branch 121)', () => {
+    expect(extractFileNameWithoutExtImpl('path/')).toBe('path/');
+    expect(extractFileNameWithoutExtImpl('')).toBe('');
+  });
+
+  it('extractFileNameWithoutExtImpl возвращает name когда replace даёт пустую строку (branch)', () => {
+    expect(extractFileNameWithoutExtImpl('.yaml')).toBe('.yaml');
+    expect(extractFileNameWithoutExtImpl('.yml')).toBe('.yml');
+    expect(extractFileNameWithoutExtImpl('path/to/.json')).toBe('.json');
+  });
+
+  it('extractFileNameWithoutExtImpl возвращает результат replace когда не пусто (branch)', () => {
+    expect(extractFileNameWithoutExtImpl('api.yaml')).toBe('api');
+    expect(extractFileNameWithoutExtImpl('path/to/file.json')).toBe('file');
   });
 });

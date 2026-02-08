@@ -43,10 +43,7 @@ class RedisRateLimitStore implements IRateLimitStore {
         };
       }
       logger.warn('Rate limiter error', {
-        err:
-          rej && typeof rej === 'object' && 'message' in rej
-            ? (rej as Error).message
-            : String(rej),
+        err: getRejectionMessage(rej),
       });
       return {
         allowed: true,
@@ -56,6 +53,10 @@ class RedisRateLimitStore implements IRateLimitStore {
       };
     }
   }
+}
+
+export function getRejectionMessage(rej: unknown): string {
+  return rej && typeof rej === 'object' && 'message' in rej ? (rej as Error).message : String(rej);
 }
 
 let limiterInstance: RateLimiterRedis | null = null;

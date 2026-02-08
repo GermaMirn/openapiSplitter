@@ -2,7 +2,7 @@ import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@prisma/client';
 import { config } from '@/shared/config/config';
-import { logger } from '@/shared/utils/logger';
+import { connectWithRetry } from './connect-with-retry';
 
 /**
  * Prisma 7 с engine type "client" требует driver adapter для подключения к БД.
@@ -16,27 +16,13 @@ export const prisma = new PrismaClient({
 });
 
 /**
- * Подключение к PostgreSQL с ретраями
+ * Подключение к PostgreSQL с ретраями (использует prisma и config).
  */
-export async function connectDatabaseWithRetry(): Promise<void> {
-  const { connectRetries, connectRetryDelayMs } = config.database;
-  let lastError: unknown;
-  for (let attempt = 1; attempt <= connectRetries; attempt++) {
-    try {
-      await prisma.$connect();
-      logger.info('Database connected');
-      return;
-    } catch (err) {
-      lastError = err;
-      logger.warn('Database connection attempt failed', {
-        attempt,
-        maxRetries: connectRetries,
-        err: err instanceof Error ? err.message : String(err),
-      });
-      if (attempt < connectRetries) {
-        await new Promise((r) => setTimeout(r, connectRetryDelayMs));
-      }
-    }
-  }
-  throw lastError;
+export async function connectDatabaseWithRetry(
+  client?: { $connect(): Promise<void> },
+  opts?: { connectRetries: number; connectRetryDelayMs: number }
+): Promise<void> {
+  const connect = client ? client.$connect.bind(client) : prisma.$connect.bind(prisma);
+  const options = opts ?? config.database;
+  return connectWithRetry(connect, options);
 }

@@ -3,6 +3,7 @@ import type Redis from 'ioredis';
 import {
   createRateLimitStore,
   closeRateLimitStore,
+  getRejectionMessage,
 } from '@/infrastructure/rate-limit/redis-rate-limit-store';
 
 const mockGetRedis = vi.hoisted(() => vi.fn((): Redis | null => null));
@@ -103,6 +104,20 @@ describe('createRateLimitStore', () => {
     });
   });
 
+  it('при remainingPoints 0 без msBeforeNext использует 60_000 (branch 41)', async () => {
+    mockGetRedis.mockReturnValueOnce({} as Redis);
+    const store = createRateLimitStore({ ...opts });
+    mockLimiterConsume.mockRejectedValueOnce({ remainingPoints: 0 });
+
+    const result = await store.consume('key');
+
+    expect(result).toEqual({
+      allowed: false,
+      retryAfterMs: 60_000,
+      limitMax: 45,
+    });
+  });
+
   it('при другой ошибке consume: логируем и возвращаем allowed true (fallback)', async () => {
     const { logger } = await import('@/shared/utils/logger');
     mockGetRedis.mockReturnValueOnce({} as Redis);
@@ -123,6 +138,62 @@ describe('createRateLimitStore', () => {
     });
   });
 
+  it('при reject объект с message использует (rej as Error).message в логе (branch 41)', async () => {
+    const { logger } = await import('@/shared/utils/logger');
+    mockGetRedis.mockReturnValueOnce({} as Redis);
+    const store = createRateLimitStore({ ...opts });
+    mockLimiterConsume.mockRejectedValueOnce({ message: 'custom err' });
+
+    await store.consume('key');
+
+    expect(logger.warn).toHaveBeenCalledWith('Rate limiter error', expect.objectContaining({ err: 'custom err' }));
+  });
+
+  it('при reject не-объект без message использует String(rej) в логе', async () => {
+    const { logger } = await import('@/shared/utils/logger');
+    mockGetRedis.mockReturnValueOnce({} as Redis);
+    const store = createRateLimitStore({ ...opts });
+    mockLimiterConsume.mockRejectedValueOnce(42);
+
+    const result = await store.consume('key');
+
+    expect(logger.warn).toHaveBeenCalledWith('Rate limiter error', expect.objectContaining({ err: '42' }));
+    expect(result.allowed).toBe(true);
+  });
+
+  it('при reject объект без message использует String(rej) в логе (branch)', async () => {
+    const { logger } = await import('@/shared/utils/logger');
+    mockGetRedis.mockReturnValueOnce({} as Redis);
+    const store = createRateLimitStore({ ...opts });
+    mockLimiterConsume.mockRejectedValueOnce({ code: 'ERR' });
+
+    await store.consume('key');
+
+    expect(logger.warn).toHaveBeenCalledWith('Rate limiter error', expect.objectContaining({ err: '[object Object]' }));
+  });
+
+  it('при reject null использует String(rej) в логе (branch)', async () => {
+    const { logger } = await import('@/shared/utils/logger');
+    mockGetRedis.mockReturnValueOnce({} as Redis);
+    const store = createRateLimitStore({ ...opts });
+    mockLimiterConsume.mockRejectedValueOnce(null);
+
+    await store.consume('key');
+
+    expect(logger.warn).toHaveBeenCalledWith('Rate limiter error', expect.objectContaining({ err: 'null' }));
+  });
+
+  it('при reject undefined использует String(rej) в логе (branch)', async () => {
+    const { logger } = await import('@/shared/utils/logger');
+    mockGetRedis.mockReturnValueOnce({} as Redis);
+    const store = createRateLimitStore({ ...opts });
+    mockLimiterConsume.mockRejectedValueOnce(undefined);
+
+    await store.consume('key');
+
+    expect(logger.warn).toHaveBeenCalledWith('Rate limiter error', expect.objectContaining({ err: 'undefined' }));
+  });
+
   it('при ошибке создания RateLimiterRedis возвращает NoOp store', async () => {
     const { RateLimiterRedis } = await import('rate-limiter-flexible');
     mockGetRedis.mockReturnValueOnce({} as Redis);
@@ -135,6 +206,35 @@ describe('createRateLimitStore', () => {
 
     expect(result.allowed).toBe(true);
     expect(result.limitMax).toBe(45);
+  });
+
+  it('при создании RateLimiterRedis бросок не-Error логирует String(err) (branch)', async () => {
+    const { logger } = await import('@/shared/utils/logger');
+    const { RateLimiterRedis } = await import('rate-limiter-flexible');
+    mockGetRedis.mockReturnValueOnce({} as Redis);
+    vi.mocked(RateLimiterRedis).mockImplementationOnce(() => {
+      throw 'string init error';
+    });
+
+    const store = createRateLimitStore({ ...opts });
+    const result = await store.consume('key');
+
+    expect(logger.warn).toHaveBeenCalledWith('Rate limiter Redis init failed', expect.objectContaining({ err: 'string init error' }));
+    expect(result.allowed).toBe(true);
+  });
+});
+
+describe('getRejectionMessage', () => {
+  it('возвращает message когда rej — объект с message (branch)', () => {
+    expect(getRejectionMessage(new Error('err'))).toBe('err');
+    expect(getRejectionMessage({ message: 'custom' })).toBe('custom');
+  });
+
+  it('возвращает String(rej) когда rej не объект или без message (branch)', () => {
+    expect(getRejectionMessage(null)).toBe('null');
+    expect(getRejectionMessage(undefined)).toBe('undefined');
+    expect(getRejectionMessage(42)).toBe('42');
+    expect(getRejectionMessage({ code: 'ERR' })).toBe('[object Object]');
   });
 });
 

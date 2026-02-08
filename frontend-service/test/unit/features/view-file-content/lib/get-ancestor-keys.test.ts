@@ -40,4 +40,11 @@ describe('getAncestorKeys', () => {
     expect(getAncestorKeys(flat, 'a')).toEqual([]);
     expect(getAncestorKeys(flat, 'b')).toEqual([]);
   });
+
+  it('использует пустую строку для node.key когда key undefined (branch 14)', () => {
+    const treeWithUndefinedKey: TreeNode[] = [
+      { key: undefined as unknown as string, label: 'root', children: [{ key: 'child', label: 'child' }] },
+    ];
+    expect(getAncestorKeys(treeWithUndefinedKey, 'child')).toEqual(['']);
+  });
 });

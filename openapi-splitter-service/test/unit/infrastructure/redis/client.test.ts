@@ -15,6 +15,9 @@ vi.mock('ioredis', () => ({
   default: vi
     .fn()
     .mockImplementationOnce(() => {
+      throw 'string error';
+    })
+    .mockImplementationOnce(() => {
       throw new Error('connection refused');
     })
     .mockImplementation((_url: string, options: { retryStrategy?: (times: number) => number | null }) => {
@@ -41,7 +44,12 @@ describe('getRedis', () => {
     expect(getRedis('')).toBeNull();
   });
 
-  it('при ошибке создания клиента возвращает null', () => {
+  it('при ошибке создания не-Error логирует String(err) и возвращает null', () => {
+    expect(getRedis('redis://localhost:6379')).toBeNull();
+    expect(logger.warn).toHaveBeenCalledWith('Redis init failed', { err: 'string error' });
+  });
+
+  it('при ошибке создания клиента (Error) возвращает null', () => {
     expect(getRedis('redis://localhost:6379')).toBeNull();
   });
 

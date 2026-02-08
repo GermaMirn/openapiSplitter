@@ -32,7 +32,6 @@ export default defineConfig({
         'src/domain/interfaces/**',
         'src/shared/types/**',
         'src/shared/config/**',
-        'src/infrastructure/**',
         'src/presentation/controllers/file.controller.ts',
       ],
     },

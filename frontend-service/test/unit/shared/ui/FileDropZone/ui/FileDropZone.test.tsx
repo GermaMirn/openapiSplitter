@@ -58,6 +58,26 @@ describe('FileDropZone', () => {
     expect(onFileSelect).not.toHaveBeenCalled();
   });
 
+  it('при change без файлов не вызывает onFileSelect (branch 25)', () => {
+    const onFileSelect = vi.fn();
+    render(<FileDropZone onFileSelect={onFileSelect} />, { wrapper });
+
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    fireEvent.change(input, { target: { files: [] } });
+
+    expect(onFileSelect).not.toHaveBeenCalled();
+  });
+
+  it('при drop без файлов не вызывает onFileSelect (branch 33)', () => {
+    const onFileSelect = vi.fn();
+    render(<FileDropZone onFileSelect={onFileSelect} />, { wrapper });
+
+    const dropZone = screen.getAllByRole('button')[0];
+    fireEvent.drop(dropZone, { dataTransfer: { files: [] } });
+
+    expect(onFileSelect).not.toHaveBeenCalled();
+  });
+
   it('обрабатывает drag over', () => {
     render(<FileDropZone onFileSelect={vi.fn()} />, { wrapper });
 
@@ -93,11 +113,24 @@ describe('FileDropZone', () => {
     render(<FileDropZone onFileSelect={vi.fn()} buttonLabel="Select" />, { wrapper });
 
     const buttons = screen.getAllByRole('button');
-    const selectButton = buttons.find(b => b.textContent?.includes('Select'));
+    const selectButton = buttons[1];
     const input = document.querySelector('input[type="file"]') as HTMLInputElement;
     const clickSpy = vi.spyOn(input, 'click');
 
-    if (selectButton) fireEvent.click(selectButton);
+    fireEvent.click(selectButton);
+
+    expect(clickSpy).toHaveBeenCalled();
+  });
+
+  it('при клике по кнопке с buttonLabel вызывается input.click (строки 81-83)', () => {
+    render(<FileDropZone onFileSelect={vi.fn()} buttonLabel="Upload" />, { wrapper });
+
+    const buttons = screen.getAllByRole('button');
+    const uploadButton = buttons[1];
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const clickSpy = vi.spyOn(input, 'click');
+
+    fireEvent.click(uploadButton);
 
     expect(clickSpy).toHaveBeenCalled();
   });

@@ -142,4 +142,42 @@ paths:
 
     await expect(useCase.execute('invalid-uuid')).rejects.toThrow(FileNotFoundError);
   });
+
+  it('при ошибке в updateRootFile (stringify/update) ловит и логирует, не прерывает удаление', async () => {
+    const rootSpec = {
+      openapi: '3.0.0',
+      info: { title: 'Test', version: '1.0.0' },
+      paths: { '/health': { $ref: './paths/health.yaml' } },
+    };
+    const mockGetFile = vi.fn().mockResolvedValue({
+      id: '123e4567-e89b-12d3-a456-426614174000',
+      path: 'test1/paths/health.yaml',
+    });
+    const mockDeleteFile = vi.fn().mockResolvedValue(undefined);
+    const mockGetFilesByPath = vi.fn().mockResolvedValue([
+      { id: 'root-id', path: 'test1/openapi.yaml' },
+    ]);
+    const mockGetFileContent = vi.fn().mockResolvedValue(Buffer.from('openapi: 3.0.0'));
+    const mockUpdateFileContent = vi.fn().mockResolvedValue(undefined);
+    const mockParse = vi.spyOn(yamlParser, 'parse').mockResolvedValue(rootSpec);
+    const mockStringify = vi.spyOn(yamlParser, 'stringify').mockRejectedValue(new Error('stringify failed'));
+
+    const filesServiceClient = {
+      getFile: mockGetFile,
+      deleteFile: mockDeleteFile,
+      getFilesByPath: mockGetFilesByPath,
+      getFileContent: mockGetFileContent,
+      updateFileContent: mockUpdateFileContent,
+    } as never;
+    const useCase = new DeleteFileUseCase(filesServiceClient, yamlParser);
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    await useCase.execute('123e4567-e89b-12d3-a456-426614174000');
+
+    expect(mockDeleteFile).toHaveBeenCalled();
+    expect(consoleSpy).toHaveBeenCalled();
+    consoleSpy.mockRestore();
+    mockParse.mockRestore();
+    mockStringify.mockRestore();
+  });
 });

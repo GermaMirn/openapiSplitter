@@ -35,11 +35,23 @@ describe('useUploadSpec', () => {
 
     const res = await uploadPromise;
     expect(res).toEqual(mockResult);
-    
+
     await waitFor(() => expect(result.current.data).toEqual(mockResult));
   });
 
-  it('пробрасывает ошибку и устанавливает error', async () => {
+  it('передаёт path в uploadYaml при вызове uploadFile(file, path)', async () => {
+    const mockResult = createMockResponse(1);
+    vi.mocked(splitterApi.uploadYaml).mockResolvedValue(mockResult);
+
+    const { result } = renderHook(() => useUploadSpec());
+
+    const file = new File(['x'], 'api.yaml');
+    await result.current.uploadFile(file, '/custom/path');
+
+    expect(splitterApi.uploadYaml).toHaveBeenCalledWith(file, '/custom/path');
+  });
+
+  it('при Error использует err.message (branch 29 true)', async () => {
     vi.mocked(splitterApi.uploadYaml).mockRejectedValue(new Error('Upload failed'));
 
     const { result } = renderHook(() => useUploadSpec());
@@ -50,13 +62,38 @@ describe('useUploadSpec', () => {
     await waitFor(() => expect(result.current.error).toBe('Upload failed'));
   });
 
-  it('обрабатывает не-Error ошибку', async () => {
+  it('при не-Error использует fallback "Ошибка загрузки файла" (branch 29 false)', async () => {
     vi.mocked(splitterApi.uploadYaml).mockRejectedValue('string error');
 
     const { result } = renderHook(() => useUploadSpec());
 
     const file = new File(['content'], 'api.yaml');
-    await expect(result.current.uploadFile(file)).rejects.toBe('string error');
+    let thrown: unknown;
+    try {
+      await result.current.uploadFile(file);
+    } catch (e) {
+      thrown = e;
+    }
+    expect(thrown).toBe('string error');
+    await waitFor(() => expect(result.current.error).toBe('Ошибка загрузки файла'));
+  });
+
+  it('при reject с не-Error объектом использует fallback (branch 29 false)', async () => {
+    vi.mocked(splitterApi.uploadYaml).mockRejectedValue({ code: 500 });
+
+    const { result } = renderHook(() => useUploadSpec());
+
+    await expect(result.current.uploadFile(new File([], 'x.yaml'))).rejects.toEqual({ code: 500 });
+
+    await waitFor(() => expect(result.current.error).toBe('Ошибка загрузки файла'));
+  });
+
+  it('при reject с undefined использует fallback (branch 29 false)', async () => {
+    vi.mocked(splitterApi.uploadYaml).mockRejectedValue(undefined);
+
+    const { result } = renderHook(() => useUploadSpec());
+
+    await expect(result.current.uploadFile(new File([], 'x.yaml'))).rejects.toBeUndefined();
 
     await waitFor(() => expect(result.current.error).toBe('Ошибка загрузки файла'));
   });

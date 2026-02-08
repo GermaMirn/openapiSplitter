@@ -124,4 +124,23 @@ describe('createRateLimiterMiddleware', () => {
     expect(res.setHeader).toHaveBeenCalledWith('X-RateLimit-Reset', 2);
     expect(next).toHaveBeenCalled();
   });
+
+  it('использует unknown когда нет ip и remoteAddress (branch)', async () => {
+    const store: IRateLimitStore = {
+      consume: vi.fn().mockResolvedValue({
+        allowed: true,
+        remainingPoints: 45,
+        msBeforeNext: 0,
+        limitMax: 45,
+      }),
+    };
+    const req = createReq({ ip: undefined as unknown as string, socket: { remoteAddress: undefined as unknown as string } });
+    const res = createRes();
+    const next = vi.fn();
+
+    const middleware = createRateLimiterMiddleware(store);
+    await middleware(req, res as never, next);
+
+    expect(store.consume).toHaveBeenCalledWith('unknown');
+  });
 });

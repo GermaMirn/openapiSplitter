@@ -64,4 +64,13 @@ describe('filterTreeByQuery', () => {
     expect(result[0].label).toBe('openapi-spec');
     expect(result[0].children).toBeDefined();
   });
+
+  it('использует пустую строку для node.label когда label undefined (branch 14)', () => {
+    const treeWithNoLabel: TreeNode[] = [
+      { key: 'a', label: undefined as unknown as string, children: [{ key: 'b', label: 'needle' }] },
+    ];
+    const result = filterTreeByQuery(treeWithNoLabel, 'needle');
+    expect(result).toHaveLength(1);
+    expect(result[0].key).toBe('a');
+  });
 });

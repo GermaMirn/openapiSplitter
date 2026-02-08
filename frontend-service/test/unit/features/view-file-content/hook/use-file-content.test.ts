@@ -68,6 +68,16 @@ describe('useFileContent', () => {
     expect(result.current.data).toBeNull();
   });
 
+  it('устанавливает fallback error при reject не-Error (branch 54)', async () => {
+    vi.mocked(splitterApi.getFileContent).mockRejectedValue('string error');
+
+    const { result } = renderHook(() => useFileContent('file1', nodesWithFileId));
+
+    await waitFor(() => expect(result.current.error).toBe('Ошибка загрузки файла'));
+
+    expect(result.current.data).toBeNull();
+  });
+
   it('возвращает "Узел не найден" для несуществующего ключа', async () => {
     const { result } = renderHook(() => useFileContent('missing', nodesWithFileId));
 

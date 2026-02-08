@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+import yaml from 'js-yaml';
 import { validateYamlContent } from '@/shared/ui/FilePreview/lib/validate-yaml-content';
 
 const validOpenApi = `
@@ -34,6 +35,15 @@ paths: {}
     const result = validateYamlContent('key: "unclosed');
     expect(result.valid).toBe(false);
     expect(result.error).toBeDefined();
+  });
+
+  it('при throw не-Error от yaml.load возвращает "Невалидный YAML" (branch 14)', () => {
+    vi.spyOn(yaml, 'load').mockImplementationOnce(() => {
+      throw 'yaml parse error';
+    });
+    const result = validateYamlContent('valid: yaml');
+    expect(result).toEqual({ valid: false, error: 'Невалидный YAML' });
+    vi.restoreAllMocks();
   });
 
   it('отклоняет отсутствие openapi/swagger', () => {

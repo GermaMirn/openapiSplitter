@@ -30,4 +30,19 @@ describe('VirtualPath', () => {
   it('выбрасывает DomainException для пути с .. (ошибка)', () => {
     expect(() => VirtualPath.create('paths/../secret')).toThrow(DomainException);
   });
+
+  it('выбрасывает DomainException для пути длиннее 2048 символов', () => {
+    expect(() => VirtualPath.create('a'.repeat(2049))).toThrow(DomainException);
+    expect(() => VirtualPath.create('a'.repeat(2049))).toThrow('Virtual path too long');
+  });
+
+  it('getDocumentPath возвращает путь без изменений если последний сегмент не openapi.yaml', () => {
+    const path = VirtualPath.create('docs/spec/other.yaml');
+    expect(path.getDocumentPath()).toBe('docs/spec/other.yaml');
+  });
+
+  it('getDocumentPath возвращает пустую строку если путь только openapi.yaml', () => {
+    const path = VirtualPath.create('openapi.yaml');
+    expect(path.getDocumentPath()).toBe('');
+  });
 });

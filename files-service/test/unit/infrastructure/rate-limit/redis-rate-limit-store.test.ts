@@ -123,6 +123,31 @@ describe('createRateLimitStore', () => {
     });
   });
 
+  it('при reject не-Error использует String(rej) в логе (branch 49)', async () => {
+    const { logger } = await import('@/shared/utils/logger');
+    mockGetRedis.mockReturnValueOnce({} as Redis);
+    const store = createRateLimitStore({ ...opts });
+    mockLimiterConsume.mockRejectedValueOnce(42);
+
+    await store.consume('key');
+
+    expect(logger.warn).toHaveBeenCalledWith('Rate limiter error', expect.objectContaining({ err: '42' }));
+  });
+
+  it('при remainingPoints 0 без msBeforeNext использует 60_000', async () => {
+    mockGetRedis.mockReturnValueOnce({} as Redis);
+    const store = createRateLimitStore({ ...opts });
+    mockLimiterConsume.mockRejectedValueOnce({ remainingPoints: 0 });
+
+    const result = await store.consume('key');
+
+    expect(result).toEqual({
+      allowed: false,
+      retryAfterMs: 60_000,
+      limitMax: 45,
+    });
+  });
+
   it('при ошибке создания RateLimiterRedis возвращает NoOp store', async () => {
     const { RateLimiterRedis } = await import('rate-limiter-flexible');
     mockGetRedis.mockReturnValueOnce({} as Redis);
@@ -135,6 +160,21 @@ describe('createRateLimitStore', () => {
 
     expect(result.allowed).toBe(true);
     expect(result.limitMax).toBe(45);
+  });
+
+  it('при создании RateLimiterRedis бросок не-Error логирует String(err) (branch 88)', async () => {
+    const { logger } = await import('@/shared/utils/logger');
+    const { RateLimiterRedis } = await import('rate-limiter-flexible');
+    mockGetRedis.mockReturnValueOnce({} as Redis);
+    vi.mocked(RateLimiterRedis).mockImplementationOnce(() => {
+      throw 'string init error';
+    });
+
+    const store = createRateLimitStore({ ...opts });
+    const result = await store.consume('key');
+
+    expect(logger.warn).toHaveBeenCalledWith('Rate limiter Redis init failed', expect.objectContaining({ err: 'string init error' }));
+    expect(result.allowed).toBe(true);
   });
 });
 

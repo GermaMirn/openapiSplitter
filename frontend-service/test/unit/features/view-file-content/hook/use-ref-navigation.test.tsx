@@ -131,6 +131,26 @@ describe('useRefNavigation', () => {
     expect(setSelectedKey).toHaveBeenCalledWith('doc-schemas-user');
   });
 
+  it('использует cleanRefPath как targetPath когда currentDir пустой (branch 32)', () => {
+    const nodesRootFile: TreeNode[] = [
+      { key: 'root', label: 'openapi.yaml', data: { type: 'file', path: 'openapi.yaml' } },
+      { key: 'root-schemas', label: 'schemas', data: { type: 'folder' }, children: [
+        { key: 'root-schemas-user', label: 'user.yaml', data: { type: 'file', path: 'schemas/user.yaml' } },
+      ] },
+    ];
+    const setSelectedKey = vi.fn();
+    const setExpandedKeys = vi.fn();
+
+    const { result } = renderHook(
+      () => useRefNavigation(nodesRootFile, 'root', setSelectedKey, setExpandedKeys),
+      { wrapper }
+    );
+
+    result.current('./schemas/user.yaml');
+
+    expect(setSelectedKey).toHaveBeenCalledWith('root-schemas-user');
+  });
+
   it('setExpandedKeys callback корректно обновляет состояние', () => {
     const nodesWithParents: TreeNode[] = [
       {

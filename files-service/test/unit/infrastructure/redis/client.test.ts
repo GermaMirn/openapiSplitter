@@ -3,6 +3,7 @@ import { getRedis, closeRedis } from '@/infrastructure/redis/client';
 
 const storedErrorCb = vi.hoisted(() => ({ current: null as ((err: Error) => void) | null }));
 const lastRedisOptions = vi.hoisted(() => ({ current: null as { retryStrategy?: (times: number) => number | null } | null }));
+const redisCallCount = vi.hoisted(() => ({ count: 0 }));
 
 const fakeClient = vi.hoisted(() => ({
   on: vi.fn((event: string, cb: (err: Error) => void) => {
@@ -11,16 +12,18 @@ const fakeClient = vi.hoisted(() => ({
   quit: vi.fn().mockResolvedValue(undefined),
 }));
 
+const RedisMock = vi.hoisted(() =>
+  vi.fn((_url: string, options?: { retryStrategy?: (times: number) => number | null }) => {
+    redisCallCount.count += 1;
+    if (redisCallCount.count === 1) throw new Error('connection refused');
+    if (redisCallCount.count === 2) throw 'string error';
+    if (options) lastRedisOptions.current = options;
+    return fakeClient;
+  })
+);
+
 vi.mock('ioredis', () => ({
-  default: vi
-    .fn()
-    .mockImplementationOnce(() => {
-      throw new Error('connection refused');
-    })
-    .mockImplementation((_url: string, options: { retryStrategy?: (times: number) => number | null }) => {
-      lastRedisOptions.current = options;
-      return fakeClient;
-    }),
+  default: RedisMock,
 }));
 
 const logger = vi.hoisted(() => ({ warn: vi.fn(), info: vi.fn(), error: vi.fn(), debug: vi.fn() }));
@@ -43,6 +46,11 @@ describe('getRedis', () => {
 
   it('при ошибке создания клиента возвращает null', () => {
     expect(getRedis('redis://localhost:6379')).toBeNull();
+  });
+
+  it('при throw не-Error в конструкторе логирует String(err) (branch 32)', () => {
+    expect(getRedis('redis://other:6379')).toBeNull();
+    expect(logger.warn).toHaveBeenCalledWith('Redis init failed', expect.objectContaining({ err: 'string error' }));
   });
 
   it('при успешном создании возвращает клиент; closeRedis вызывает quit', async () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { errorHandler } from '@/presentation/middleware/error-handler.middleware';
+import { errorHandler, createErrorLogContext } from '@/presentation/middleware/error-handler.middleware';
 import { DomainException } from '@/domain/exceptions';
 
 describe('errorHandler', () => {
@@ -152,5 +152,15 @@ describe('errorHandler', () => {
         }),
       })
     );
+  });
+
+  it('createErrorLogContext использует UNKNOWN при отсутствии code (branch)', () => {
+    const req = { path: '/api', method: 'GET' };
+    const err = new Error('test');
+    const result = createErrorLogContext(req as never, err) as { code: string; path: string; method: string };
+
+    expect(result.code).toBe('UNKNOWN');
+    expect(result.path).toBe('/api');
+    expect(result.method).toBe('GET');
   });
 });

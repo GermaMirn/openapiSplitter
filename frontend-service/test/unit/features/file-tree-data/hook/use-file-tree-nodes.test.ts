@@ -44,6 +44,19 @@ describe('useFileTreeNodes', () => {
     expect(result.current.nodes).toEqual([]);
   });
 
+  it('устанавливает fallback error при reject не-Error (branch 34)', async () => {
+    vi.mocked(splitterApi.getTree).mockRejectedValue('string error');
+
+    const { result } = renderHook(() => useFileTreeNodes());
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(result.current.error).toBe('Ошибка загрузки дерева файлов');
+    expect(result.current.nodes).toEqual([]);
+  });
+
   it('refetch перезагружает дерево', async () => {
     vi.mocked(splitterApi.getTree)
       .mockResolvedValueOnce([{ key: '1', label: 'a' }] as TreeNode[])

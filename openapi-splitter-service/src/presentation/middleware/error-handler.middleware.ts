@@ -6,7 +6,7 @@ import type { LogValue } from '@/shared/types';
 /**
  * Создаёт объект для логирования ошибки
  */
-function createErrorLogContext(req: Request, err: Error, code?: string): LogValue {
+export function createErrorLogContext(req: Request, err: Error, code?: string): LogValue {
   return {
     path: req.path,
     method: req.method,

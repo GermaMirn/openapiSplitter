@@ -47,4 +47,12 @@ describe('getBreadcrumbItems', () => {
     const result = getBreadcrumbItems(tree, 'missing');
     expect(result).toEqual([]);
   });
+
+  it('использует key как label когда node.label отсутствует (branch 16)', () => {
+    const treeNoLabel: TreeNode[] = [
+      { key: 'doc', label: undefined as unknown as string, data: { type: 'document' } },
+    ];
+    const result = getBreadcrumbItems(treeNoLabel, 'doc');
+    expect(result).toEqual([{ key: 'doc', label: 'doc' }]);
+  });
 });

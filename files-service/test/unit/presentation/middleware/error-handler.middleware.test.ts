@@ -110,4 +110,26 @@ describe('errorHandler', () => {
     const callArg = res.json.mock.calls[0][0];
     expect(callArg.error.stack).toBeUndefined();
   });
+
+  it('добавляет stack в ответ при NODE_ENV=development (generic error, branch 49)', () => {
+    process.env.NODE_ENV = 'development';
+    const err = new Error('internal');
+    const req = { path: '/api', method: 'GET' };
+    const res = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+    };
+
+    errorHandler(err, req as never, res as never, vi.fn());
+
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: expect.objectContaining({
+          message: 'internal',
+          code: 'INTERNAL_ERROR',
+          stack: expect.any(String),
+        }),
+      })
+    );
+  });
 });

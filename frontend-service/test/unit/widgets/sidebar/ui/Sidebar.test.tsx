@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { PrimeReactProvider } from 'primereact/api';
 import { ToastProvider } from '@/shared/lib/toast';
 import { MemoryRouter } from 'react-router-dom';
@@ -26,8 +26,11 @@ vi.mock('@/features/export-zip', () => ({
 }));
 
 let capturedHandlers: CapturedHandlers = {};
+let capturedSearchOnChange: ((e: React.ChangeEvent<HTMLInputElement> | { target: { value: string | null } }) => void) | null = null;
+
 vi.mock('@/shared/ui', async () => {
   const actual = await vi.importActual<typeof import('@/shared/ui')>('@/shared/ui');
+  const ActualInput = actual.Input;
   return {
     ...actual,
     FileTree: ({ onDocumentDelete, onDocumentExport, nodes }: FileTreeProps) => {
@@ -39,6 +42,12 @@ vi.mock('@/shared/ui', async () => {
           ))}
         </div>
       );
+    },
+    Input: (props: React.ComponentProps<typeof ActualInput>) => {
+      if (props.placeholder === 'Поиск по файлам...') {
+        capturedSearchOnChange = props.onChange as typeof capturedSearchOnChange;
+      }
+      return <ActualInput {...props} />;
     },
   };
 });
@@ -60,6 +69,7 @@ describe('Sidebar', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     capturedHandlers = {};
+    capturedSearchOnChange = null;
   });
 
   it('рендерит заголовок OpenAPI Splitter', () => {
@@ -121,6 +131,27 @@ describe('Sidebar', () => {
     fireEvent.change(searchInput, { target: { value: 'doc1' } });
 
     expect(screen.queryByText('doc2')).not.toBeInTheDocument();
+  });
+
+  it('при onChange с value null устанавливает пустую строку (branch 66)', () => {
+    render(
+      <Sidebar
+        treeNodes={mockNodes}
+        selectedKey={null}
+        onSelect={vi.fn()}
+        onOpenUpload={vi.fn()}
+        refetch={vi.fn()}
+      />,
+      { wrapper }
+    );
+
+    expect(capturedSearchOnChange).not.toBeNull();
+    act(() => {
+      capturedSearchOnChange!({ target: { value: null } } as unknown as React.ChangeEvent<HTMLInputElement>);
+    });
+
+    expect(screen.getByText('doc1')).toBeInTheDocument();
+    expect(screen.getByText('doc2')).toBeInTheDocument();
   });
 
   it('показывает "Ничего не найдено" при пустом результате поиска', () => {
@@ -207,6 +238,27 @@ describe('Sidebar', () => {
     });
   });
 
+  it('при reject не-Error в deleteDocument показывает fallback сообщение (branch 34)', async () => {
+    mockDeleteDocument.mockRejectedValue('string error');
+
+    render(
+      <Sidebar
+        treeNodes={mockNodes}
+        selectedKey={null}
+        onSelect={vi.fn()}
+        onOpenUpload={vi.fn()}
+        refetch={vi.fn()}
+      />,
+      { wrapper }
+    );
+
+    await capturedHandlers.onDocumentDelete?.('doc1');
+
+    await waitFor(() => {
+      expect(mockDeleteDocument).toHaveBeenCalledWith('doc1');
+    });
+  });
+
   it('вызывает handleDocumentExport и показывает success toast', async () => {
     mockExportZip.mockResolvedValue(undefined);
 
@@ -230,6 +282,27 @@ describe('Sidebar', () => {
 
   it('вызывает handleDocumentExport и показывает error toast при ошибке', async () => {
     mockExportZip.mockRejectedValue(new Error('Export failed'));
+
+    render(
+      <Sidebar
+        treeNodes={mockNodes}
+        selectedKey={null}
+        onSelect={vi.fn()}
+        onOpenUpload={vi.fn()}
+        refetch={vi.fn()}
+      />,
+      { wrapper }
+    );
+
+    await capturedHandlers.onDocumentExport?.('doc1');
+
+    await waitFor(() => {
+      expect(mockExportZip).toHaveBeenCalledWith('doc1');
+    });
+  });
+
+  it('при reject не-Error в exportZip показывает fallback сообщение (branch 44)', async () => {
+    mockExportZip.mockRejectedValue('export string error');
 
     render(
       <Sidebar

@@ -112,7 +112,11 @@ export class UploadYamlUseCase {
    * Извлекает имя файла без расширения
    */
   private extractFileNameWithoutExt(fileName: string): string {
-    const name = fileName.split('/').pop() || fileName;
-    return name.replace(/\.(yaml|yml|json)$/i, '') || name;
+    return extractFileNameWithoutExtImpl(fileName);
   }
+}
+
+export function extractFileNameWithoutExtImpl(fileName: string): string {
+  const name = fileName.split('/').pop() || fileName;
+  return name.replace(/\.(yaml|yml|json)$/i, '') || name;
 }

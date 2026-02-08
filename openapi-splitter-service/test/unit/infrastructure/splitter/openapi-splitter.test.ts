@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { OpenApiSplitter } from '@/infrastructure/splitter/openapi-splitter';
 import { YamlParser } from '@/infrastructure/parsers/yaml-parser';
 import { VirtualPath } from '@/domain/value-objects';
+import type { OpenApiSpec } from '@/shared/types';
 
 describe('OpenApiSplitter', () => {
   const yamlParser = new YamlParser();
@@ -55,6 +56,28 @@ describe('OpenApiSplitter', () => {
 
     const result = await splitter.split(spec, basePath);
 
+    const map = result.toFilesMap();
+    expect(Object.keys(map)).toContain('docs/components/schemas/User.yaml');
+  });
+
+  it('пропускает компонент-тип если значение не объект или null (branch)', async () => {
+    const spec = {
+      openapi: '3.0.0',
+      info: { title: 'Test', version: '1.0.0' },
+      paths: {},
+      components: {
+        schemas: {
+          User: { type: 'object', properties: {} },
+        },
+        badNull: null,
+        badString: 'not-an-object',
+      },
+    } as unknown as OpenApiSpec;
+    const basePath = VirtualPath.create('docs');
+
+    const result = await splitter.split(spec, basePath);
+
+    expect(result.files.length).toBeGreaterThan(0);
     const map = result.toFilesMap();
     expect(Object.keys(map)).toContain('docs/components/schemas/User.yaml');
   });

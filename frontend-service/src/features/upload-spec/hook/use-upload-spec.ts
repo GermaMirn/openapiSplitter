@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { splitterApi } from '@/shared/api';
+import { getUploadErrorMessage } from './get-upload-error-message';
 import type { UseUploadSpecResult } from '../types';
 import type { UploadYamlResponse } from '@/shared/types';
 
@@ -23,8 +24,7 @@ export function useUploadSpec(): UseUploadSpecResult {
       setData(result);
       return result;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Ошибка загрузки файла';
-      setError(errorMessage);
+      setError(getUploadErrorMessage(err));
       throw err;
     } finally {
       setIsLoading(false);
