@@ -4,6 +4,6 @@ npx lint-staged
 STAGED=$(git diff --cached --name-only)
 for dir in files-service openapi-splitter-service frontend-service; do
   if echo "$STAGED" | grep -q "^$dir/"; then
-    (cd "$dir" && bun run test) || exit 1
+    (cd "$dir" && bun run test:coverage) || exit 1
   fi
 done

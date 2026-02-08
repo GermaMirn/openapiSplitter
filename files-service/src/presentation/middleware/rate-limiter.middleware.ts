@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import type { IRateLimitStore } from '@/application/interfaces';
+import { config } from '@/shared/config/config';
 
 /** Ключ для лимита — IP клиента */
 function getClientIdentifier(req: Request): string {
@@ -10,6 +11,15 @@ function getClientIdentifier(req: Request): string {
   return req.ip ?? req.socket.remoteAddress ?? 'unknown';
 }
 
+/** Запрос от внутреннего сервиса (openapi-splitter) — не лимитируем. */
+function isInternalServiceRequest(req: Request): boolean {
+  const { headerName, headerValue, secret } = config.internalService;
+  const value = req.headers[headerName];
+  if (typeof value !== 'string' || value !== headerValue) return false;
+  if (!secret) return true;
+  return req.headers['x-internal-secret'] === secret;
+}
+
 /** Middleware rate limit: берёт ключ клиента из запроса, вызывает store (порт) и проставляет заголовки/статус. */
 export function createRateLimiterMiddleware(store: IRateLimitStore) {
   return async function rateLimiter(
@@ -17,6 +27,9 @@ export function createRateLimiterMiddleware(store: IRateLimitStore) {
     res: Response,
     next: NextFunction
   ): Promise<void> {
+    if (isInternalServiceRequest(req)) {
+      return next();
+    }
     const key = getClientIdentifier(req);
     try {
       const result = await store.consume(key);

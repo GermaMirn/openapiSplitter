@@ -52,4 +52,10 @@ export const config = {
     max: parseInt(process.env.RATE_LIMIT_MAX || '45', 10),
     windowSec: parseInt(process.env.RATE_LIMIT_WINDOW_SEC || '60', 10),
   },
+  /** Запросы с этим заголовком (и при совпадении секрета, если задан) не лимитируются (внутренние вызовы от openapi-splitter-service). */
+  internalService: {
+    headerName: 'x-internal-service',
+    headerValue: process.env.INTERNAL_SERVICE_HEADER_VALUE || 'openapi-splitter',
+    secret: process.env.INTERNAL_SERVICE_SECRET || '',
+  },
 };

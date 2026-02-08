@@ -6,6 +6,9 @@ export const config = {
   },
   filesService: {
     url: process.env.FILES_SERVICE_URL || 'http://localhost:8001',
+    /** Заголовки для внутренних вызовов (обход rate limit в files-service). */
+    internalServiceHeader: process.env.FILES_INTERNAL_SERVICE_HEADER || 'openapi-splitter',
+    internalServiceSecret: process.env.INTERNAL_SERVICE_SECRET || '',
   },
   corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173',
   redis: {

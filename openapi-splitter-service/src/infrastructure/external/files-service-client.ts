@@ -2,6 +2,7 @@ import axios, { type AxiosInstance } from 'axios';
 import FormData from 'form-data';
 import { FileNotFoundError } from '@/domain/exceptions';
 import { isAxiosError, type TypedAxiosError, type CaughtError } from '@/shared/types';
+import { config } from '@/shared/config/config';
 
 /**
  * DTO файла из files-service
@@ -16,15 +17,24 @@ export interface FileDto {
 }
 
 /**
- * Клиент для взаимодействия с files-service
+ * Клиент для взаимодействия с files-service.
+ * Добавляет заголовки X-Internal-Service (и при необходимости X-Internal-Secret), чтобы files-service не применял rate limit к внутренним вызовам.
  */
 export class FilesServiceClient {
   private readonly client: AxiosInstance;
 
   constructor(baseUrl: string) {
+    const { internalServiceHeader, internalServiceSecret } = config.filesService;
+    const headers: Record<string, string> = {
+      'X-Internal-Service': internalServiceHeader,
+    };
+    if (internalServiceSecret) {
+      headers['X-Internal-Secret'] = internalServiceSecret;
+    }
     this.client = axios.create({
       baseURL: `${baseUrl}/api/v1/files`,
       timeout: 30000,
+      headers,
     });
   }
 

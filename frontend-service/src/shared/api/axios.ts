@@ -1,36 +1,35 @@
 import axios from "axios";
-import { API_URL } from '../config/api';
+import { API_URL, API_VERSION } from '../config/api';
 
-// Динамически определяем baseURL на основе текущего домена
+// Динамически определяем baseURL на основе текущего домена и версии API
 const getBaseURL = () => {
+  const apiPrefix = `/api/${API_VERSION}`;
   // В dev режиме используем переменную окружения или прокси через Vite
   const isDevMode = import.meta.env.DEV;
   const devApiUrl = API_URL;
 
   if (isDevMode && devApiUrl) {
     // Если указан URL API для dev режима, используем его
-    return devApiUrl.endsWith('/api') ? devApiUrl : `${devApiUrl}/api`;
+    const base = devApiUrl.endsWith('/api') ? devApiUrl : `${devApiUrl}/api`;
+    return base.endsWith(API_VERSION) ? base : `${base}/${API_VERSION}`;
   }
 
   if (isDevMode) {
-    // В dev режиме без переменной окружения используем прокси через Vite
-    return "/api";
+    return apiPrefix;
   }
 
-  // В продакшене используем текущий домен + /api
+  // В продакшене используем текущий домен + /api/v1
   if (typeof window !== 'undefined') {
     const origin = window.location.origin;
-    // Убираем порт если он стандартный (443 для https, 80 для http)
     let baseUrl = origin;
     if (origin.includes(':443')) {
       baseUrl = origin.replace(':443', '');
     } else if (origin.includes(':80') && origin.startsWith('http://')) {
       baseUrl = origin.replace(':80', '');
     }
-    return `${baseUrl}/api`;
+    return `${baseUrl}${apiPrefix}`;
   }
-  // Fallback для SSR или других случаев
-  return "/api";
+  return apiPrefix;
 };
 
 export const api = axios.create({
