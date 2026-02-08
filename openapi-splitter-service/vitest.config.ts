@@ -35,6 +35,12 @@ export default defineConfig({
         'src/infrastructure/external/**',
         'src/presentation/controllers/splitter.controller.ts',
       ],
+      thresholds: {
+        lines: 100,
+        functions: 100,
+        branches: 100,
+        statements: 100,
+      },
     },
   },
 });

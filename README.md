@@ -9,7 +9,7 @@
 - **openapi-splitter-service** (порт 8000) - сервис для парсинга и разделения OpenAPI спецификаций (БД не использует)
 - **files-service** (порт 8001) - S3-like сервис для работы с файлами (сохранение, получение, удаление)
 - **frontend-service** (порт 5173) - React приложение
-- **nginx** (порт 80) - reverse proxy для маршрутизации запросов
+- **nginx** (порт 80) - reverse proxy для маршрутизации запросов (с Basic Auth: логин/пароль см. ниже)
 - **db-files** (порт 5434 на хосте → 5432 в контейнере) - PostgreSQL для files-service
 
 ## Схема взаимодействия
@@ -58,7 +58,7 @@ Frontend → Nginx → OpenAPI-Splitter-Service → Files-Service
 
 ### Infrastructure
 - **Containerization**: Docker + Docker Compose
-- **Reverse Proxy**: Nginx
+- **Reverse Proxy**: Nginx (Basic Auth для доступа к приложению)
 - **Database**: PostgreSQL 15
 
 ## Структура проекта
@@ -113,6 +113,17 @@ openapiSplitter/
     └── tsconfig.json
 ```
 
+## Доступ к приложению (демо)
+
+Приложение за nginx защищено **HTTP Basic Auth**:
+
+| Поле    | Значение |
+|--------|----------|
+| Логин  | `admin`  |
+| Пароль | `admin`  |
+
+Укажите их при первом заходе на http://localhost (или на развёрнутый демо-URL). Сессия сохраняется в браузере.
+
 ## Быстрый старт
 
 ### Предварительные требования
@@ -143,6 +154,11 @@ docker-compose up -d
 ```
 http://localhost
 ```
+
+5. **Доступ защищён Basic Auth** (для безопасности демо):
+   - **Логин:** `admin`
+   - **Пароль:** `admin`  
+   При первом заходе браузер запросит логин и пароль.
 
 ### Локальная разработка
 

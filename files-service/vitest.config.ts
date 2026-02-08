@@ -34,6 +34,12 @@ export default defineConfig({
         'src/shared/config/**',
         'src/presentation/controllers/file.controller.ts',
       ],
+      thresholds: {
+        lines: 100,
+        functions: 100,
+        branches: 100,
+        statements: 100,
+      },
     },
   },
 });
