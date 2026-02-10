@@ -139,15 +139,16 @@ git clone <repository-url>
 cd openapiSplitter
 ```
 
-2. Создайте файлы `.env` для каждого сервиса (на основе `.env.example`):
+2. Создайте файлы `.env` для каждого сервиса (на основе `.example.env`):
 ```bash
-cp openapi-splitter-service/.env.example openapi-splitter-service/.env
-cp files-service/.env.example files-service/.env
+cp openapi-splitter-service/.example.env openapi-splitter-service/.env
+cp files-service/.example.env files-service/.env
+cp frontend-service/.example.env frontend-service/.env
 ```
 
 3. Запустите все сервисы:
 ```bash
-docker-compose up -d
+docker compose up -d --build
 ```
 
 4. Откройте приложение в браузере:
@@ -157,7 +158,7 @@ http://localhost
 
 5. **Доступ защищён Basic Auth** (для безопасности демо):
    - **Логин:** `admin`
-   - **Пароль:** `admin`  
+   - **Пароль:** `admin`
    При первом заходе браузер запросит логин и пароль.
 
 ### Локальная разработка
